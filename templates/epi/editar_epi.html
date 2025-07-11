@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,36 +12,42 @@
         .form-section {
             background: white;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 25px;
             margin-bottom: 20px;
         }
+
         .preview-image {
             max-width: 200px;
             max-height: 200px;
             border-radius: 8px;
             border: 2px solid #dee2e6;
         }
+
         .status-badge {
             font-size: 0.9em;
             padding: 0.5em 1em;
         }
+
         .validation-info {
             background: #f8f9fa;
             border-left: 4px solid #007bff;
             padding: 15px;
             border-radius: 0 8px 8px 0;
         }
+
         .btn-validar-ca {
             background: linear-gradient(45deg, #007bff, #0056b3);
             border: none;
             padding: 8px 20px;
         }
+
         .btn-validar-ca:hover {
             background: linear-gradient(45deg, #0056b3, #004085);
         }
     </style>
 </head>
+
 <body>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -74,12 +81,13 @@
                         <a href="#" class="list-group-item list-group-item-action active">
                             <i class="fas fa-edit me-2"></i>Editar EPI
                         </a>
-                        <a href="{{ url_for('epi.historico', epi_id=epi.id) }}" class="list-group-item list-group-item-action">
+                        <a href="{{ url_for('epi.historico', epi_id=epi.id) }}"
+                            class="list-group-item list-group-item-action">
                             <i class="fas fa-history me-2"></i>Histórico
                         </a>
                     </div>
                 </div>
-                
+
                 <!-- Status do EPI -->
                 <div class="card mt-3">
                     <div class="card-header bg-light">
@@ -89,35 +97,35 @@
                         <div class="mb-3">
                             <small class="text-muted">Status Geral:</small><br>
                             {% if epi.status == 'ativo' %}
-                                <span class="badge bg-success status-badge">Ativo</span>
+                            <span class="badge bg-success status-badge">Ativo</span>
                             {% elif epi.status == 'inativo' %}
-                                <span class="badge bg-secondary status-badge">Inativo</span>
+                            <span class="badge bg-secondary status-badge">Inativo</span>
                             {% else %}
-                                <span class="badge bg-danger status-badge">Vencido</span>
+                            <span class="badge bg-danger status-badge">Vencido</span>
                             {% endif %}
                         </div>
-                        
+
                         <div class="mb-3">
                             <small class="text-muted">Validade CA:</small><br>
                             {% set status_validade = epi.status_validade %}
                             {% if status_validade == 'valido' %}
-                                <span class="badge bg-success status-badge">Válido</span>
+                            <span class="badge bg-success status-badge">Válido</span>
                             {% elif status_validade == 'vencendo' %}
-                                <span class="badge bg-warning status-badge">Vencendo</span>
+                            <span class="badge bg-warning status-badge">Vencendo</span>
                             {% else %}
-                                <span class="badge bg-danger status-badge">Vencido</span>
+                            <span class="badge bg-danger status-badge">Vencido</span>
                             {% endif %}
                         </div>
-                        
+
                         <div>
                             <small class="text-muted">Estoque:</small><br>
                             {% set status_estoque = epi.status_estoque %}
                             {% if status_estoque == 'ok' %}
-                                <span class="badge bg-success status-badge">OK</span>
+                            <span class="badge bg-success status-badge">OK</span>
                             {% elif status_estoque == 'baixo' %}
-                                <span class="badge bg-warning status-badge">Baixo</span>
+                            <span class="badge bg-warning status-badge">Baixo</span>
                             {% else %}
-                                <span class="badge bg-danger status-badge">Sem Estoque</span>
+                            <span class="badge bg-danger status-badge">Sem Estoque</span>
                             {% endif %}
                         </div>
                     </div>
@@ -129,45 +137,48 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2><i class="fas fa-edit text-primary me-2"></i>Editar EPI</h2>
                     <div>
-                        <span class="text-muted">Última atualização: {{ epi.data_atualizacao.strftime('%d/%m/%Y %H:%M') if epi.data_atualizacao else 'N/A' }}</span>
+                        <span class="text-muted">Última atualização: {{ epi.data_atualizacao.strftime('%d/%m/%Y %H:%M')
+                            if epi.data_atualizacao else 'N/A' }}</span>
                     </div>
                 </div>
 
                 <!-- Mensagens de feedback -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
+                    role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
                 {% endwith %}
 
                 <form method="POST" enctype="multipart/form-data" id="form-editar-epi">
                     {{ form.hidden_tag() if form }}
-                    
+
                     <!-- Seção: Informações Básicas -->
                     <div class="form-section">
                         <h5 class="border-bottom pb-2 mb-3">
                             <i class="fas fa-info-circle text-primary me-2"></i>Informações Básicas
                         </h5>
-                        
+
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="mb-3">
                                     <label for="nome" class="form-label">Nome do EPI *</label>
-                                    <input type="text" class="form-control" id="nome" name="nome" 
-                                           value="{{ epi.nome }}" required>
+                                    <input type="text" class="form-control" id="nome" name="nome" value="{{ epi.nome }}"
+                                        required>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="status" class="form-label">Status</label>
                                     <select class="form-select" id="status" name="status">
-                                        <option value="ativo" {{ 'selected' if epi.status == 'ativo' }}>Ativo</option>
-                                        <option value="inativo" {{ 'selected' if epi.status == 'inativo' }}>Inativo</option>
+                                        <option value="ativo" {{ 'selected' if epi.status=='ativo' }}>Ativo</option>
+                                        <option value="inativo" {{ 'selected' if epi.status=='inativo' }}>Inativo
+                                        </option>
                                     </select>
                                 </div>
                             </div>
@@ -177,7 +188,8 @@
                             <div class="col-md-8">
                                 <div class="mb-3">
                                     <label for="descricao" class="form-label">Descrição</label>
-                                    <textarea class="form-control" id="descricao" name="descricao" rows="3">{{ epi.descricao or '' }}</textarea>
+                                    <textarea class="form-control" id="descricao" name="descricao"
+                                        rows="3">{{ epi.descricao or '' }}</textarea>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -185,14 +197,23 @@
                                     <label for="categoria" class="form-label">Categoria *</label>
                                     <select class="form-select" id="categoria" name="categoria" required>
                                         <option value="">Selecione...</option>
-                                        <option value="Proteção da Cabeça" {{ 'selected' if epi.categoria == 'Proteção da Cabeça' }}>Proteção da Cabeça</option>
-                                        <option value="Proteção dos Olhos e Face" {{ 'selected' if epi.categoria == 'Proteção dos Olhos e Face' }}>Proteção dos Olhos e Face</option>
-                                        <option value="Proteção Auditiva" {{ 'selected' if epi.categoria == 'Proteção Auditiva' }}>Proteção Auditiva</option>
-                                        <option value="Proteção Respiratória" {{ 'selected' if epi.categoria == 'Proteção Respiratória' }}>Proteção Respiratória</option>
-                                        <option value="Proteção das Mãos" {{ 'selected' if epi.categoria == 'Proteção das Mãos' }}>Proteção das Mãos</option>
-                                        <option value="Proteção dos Pés" {{ 'selected' if epi.categoria == 'Proteção dos Pés' }}>Proteção dos Pés</option>
-                                        <option value="Proteção do Corpo" {{ 'selected' if epi.categoria == 'Proteção do Corpo' }}>Proteção do Corpo</option>
-                                        <option value="Proteção contra Quedas" {{ 'selected' if epi.categoria == 'Proteção contra Quedas' }}>Proteção contra Quedas</option>
+                                        <option value="Proteção da Cabeça" {{ 'selected' if
+                                            epi.categoria=='Proteção da Cabeça' }}>Proteção da Cabeça</option>
+                                        <option value="Proteção dos Olhos e Face" {{ 'selected' if
+                                            epi.categoria=='Proteção dos Olhos e Face' }}>Proteção dos Olhos e Face
+                                        </option>
+                                        <option value="Proteção Auditiva" {{ 'selected' if
+                                            epi.categoria=='Proteção Auditiva' }}>Proteção Auditiva</option>
+                                        <option value="Proteção Respiratória" {{ 'selected' if
+                                            epi.categoria=='Proteção Respiratória' }}>Proteção Respiratória</option>
+                                        <option value="Proteção das Mãos" {{ 'selected' if
+                                            epi.categoria=='Proteção das Mãos' }}>Proteção das Mãos</option>
+                                        <option value="Proteção dos Pés" {{ 'selected' if
+                                            epi.categoria=='Proteção dos Pés' }}>Proteção dos Pés</option>
+                                        <option value="Proteção do Corpo" {{ 'selected' if
+                                            epi.categoria=='Proteção do Corpo' }}>Proteção do Corpo</option>
+                                        <option value="Proteção contra Quedas" {{ 'selected' if
+                                            epi.categoria=='Proteção contra Quedas' }}>Proteção contra Quedas</option>
                                     </select>
                                 </div>
                             </div>
@@ -204,15 +225,16 @@
                         <h5 class="border-bottom pb-2 mb-3">
                             <i class="fas fa-certificate text-primary me-2"></i>Certificado de Aprovação (CA)
                         </h5>
-                        
+
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="ca" class="form-label">Número do CA *</label>
                                     <div class="input-group">
-                                        <input type="text" class="form-control" id="ca" name="ca" 
-                                               value="{{ epi.ca }}" required>
-                                        <button type="button" class="btn btn-primary btn-validar-ca" onclick="validarCA()">
+                                        <input type="text" class="form-control" id="ca" name="ca" value="{{ epi.ca }}"
+                                            required>
+                                        <button type="button" class="btn btn-primary btn-validar-ca"
+                                            onclick="validarCA()">
                                             <i class="fas fa-check"></i> Validar
                                         </button>
                                     </div>
@@ -221,15 +243,15 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="validade_ca" class="form-label">Validade do CA *</label>
-                                    <input type="date" class="form-control" id="validade_ca" name="validade_ca" 
-                                           value="{{ epi.validade_ca.isoformat() if epi.validade_ca else '' }}" required>
+                                    <input type="date" class="form-control" id="validade_ca" name="validade_ca"
+                                        value="{{ epi.validade_ca.isoformat() if epi.validade_ca else '' }}" required>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="fabricante" class="form-label">Fabricante</label>
-                                    <input type="text" class="form-control" id="fabricante" name="fabricante" 
-                                           value="{{ epi.fabricante or '' }}">
+                                    <input type="text" class="form-control" id="fabricante" name="fabricante"
+                                        value="{{ epi.fabricante or '' }}">
                                 </div>
                             </div>
                         </div>
@@ -252,34 +274,34 @@
                         <h5 class="border-bottom pb-2 mb-3">
                             <i class="fas fa-boxes text-primary me-2"></i>Controle de Estoque
                         </h5>
-                        
+
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="mb-3">
                                     <label for="estoque_atual" class="form-label">Estoque Atual</label>
-                                    <input type="number" class="form-control" id="estoque_atual" name="estoque_atual" 
-                                           value="{{ epi.estoque_atual or 0 }}" min="0">
+                                    <input type="number" class="form-control" id="estoque_atual" name="estoque_atual"
+                                        value="{{ epi.estoque_atual or 0 }}" min="0">
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="mb-3">
                                     <label for="estoque_minimo" class="form-label">Estoque Mínimo</label>
-                                    <input type="number" class="form-control" id="estoque_minimo" name="estoque_minimo" 
-                                           value="{{ epi.estoque_minimo or 0 }}" min="0">
+                                    <input type="number" class="form-control" id="estoque_minimo" name="estoque_minimo"
+                                        value="{{ epi.estoque_minimo or 0 }}" min="0">
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="mb-3">
                                     <label for="preco_unitario" class="form-label">Preço Unitário (R$)</label>
-                                    <input type="number" class="form-control" id="preco_unitario" name="preco_unitario" 
-                                           value="{{ epi.preco_unitario or '' }}" step="0.01" min="0">
+                                    <input type="number" class="form-control" id="preco_unitario" name="preco_unitario"
+                                        value="{{ epi.preco_unitario or '' }}" step="0.01" min="0">
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="mb-3">
                                     <label for="modelo" class="form-label">Modelo/Referência</label>
-                                    <input type="text" class="form-control" id="modelo" name="modelo" 
-                                           value="{{ epi.modelo or '' }}">
+                                    <input type="text" class="form-control" id="modelo" name="modelo"
+                                        value="{{ epi.modelo or '' }}">
                                 </div>
                             </div>
                         </div>
@@ -290,18 +312,19 @@
                         <h5 class="border-bottom pb-2 mb-3">
                             <i class="fas fa-image text-primary me-2"></i>Imagem e Observações
                         </h5>
-                        
+
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="mb-3">
                                     <label for="observacoes" class="form-label">Observações</label>
-                                    <textarea class="form-control" id="observacoes" name="observacoes" rows="4">{{ epi.observacoes or '' }}</textarea>
+                                    <textarea class="form-control" id="observacoes" name="observacoes"
+                                        rows="4">{{ epi.observacoes or '' }}</textarea>
                                 </div>
-                                
+
                                 <div class="mb-3">
                                     <label for="imagem" class="form-label">Alterar Imagem</label>
-                                    <input type="file" class="form-control" id="imagem" name="imagem" 
-                                           accept="image/*" onchange="previewImagem(this)">
+                                    <input type="file" class="form-control" id="imagem" name="imagem" accept="image/*"
+                                        onchange="previewImagem(this)">
                                     <small class="text-muted">Formatos aceitos: JPG, PNG, GIF (máx. 5MB)</small>
                                 </div>
                             </div>
@@ -309,12 +332,14 @@
                                 <label class="form-label">Imagem Atual</label>
                                 <div class="text-center">
                                     {% if epi.imagem %}
-                                        <img id="preview-imagem" src="{{ url_for('static', filename='epi_images/' + epi.imagem) }}" 
-                                             alt="Imagem do EPI" class="preview-image">
+                                    <img id="preview-imagem"
+                                        src="{{ url_for('static', filename='epi_images/' + epi.imagem) }}"
+                                        alt="Imagem do EPI" class="preview-image">
                                     {% else %}
-                                        <div id="preview-imagem" class="preview-image d-flex align-items-center justify-content-center bg-light">
-                                            <i class="fas fa-image fa-3x text-muted"></i>
-                                        </div>
+                                    <div id="preview-imagem"
+                                        class="preview-image d-flex align-items-center justify-content-center bg-light">
+                                        <i class="fas fa-image fa-3x text-muted"></i>
+                                    </div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -357,7 +382,8 @@
                 <div class="modal-body">
                     <p>Tem certeza que deseja excluir este EPI?</p>
                     <div class="alert alert-warning">
-                        <strong>Atenção:</strong> Esta ação não pode ser desfeita. Todos os registros de entrega relacionados também serão removidos.
+                        <strong>Atenção:</strong> Esta ação não pode ser desfeita. Todos os registros de entrega
+                        relacionados também serão removidos.
                     </div>
                     <div class="bg-light p-3 rounded">
                         <strong>EPI:</strong> {{ epi.nome }}<br>
@@ -381,13 +407,13 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
+
     <script>
         // Função para preview da imagem
         function previewImagem(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     $('#preview-imagem').html(`<img src="${e.target.result}" alt="Preview" class="preview-image">`);
                 };
                 reader.readAsDataURL(input.files[0]);
@@ -410,9 +436,9 @@
                 url: '/epi/api/validar-ca',
                 method: 'POST',
                 data: { ca: ca },
-                success: function(response) {
+                success: function (response) {
                     $('#loading-validacao').hide();
-                    
+
                     if (response.status === 'valido') {
                         $('#resultado-validacao').html(`
                             <div class="text-success">
@@ -423,11 +449,11 @@
                                 Validade: ${response.validade || 'N/A'}</small>
                             </div>
                         `);
-                        
+
                         // Atualiza campos automaticamente
                         if (response.fabricante) $('#fabricante').val(response.fabricante);
                         if (response.validade) $('#validade_ca').val(response.validade);
-                        
+
                     } else if (response.status === 'invalido') {
                         $('#resultado-validacao').html(`
                             <div class="text-danger">
@@ -436,7 +462,7 @@
                                 <small>${response.mensagem}</small>
                             </div>
                         `);
-                        
+
                     } else if (response.status === 'vencido') {
                         $('#resultado-validacao').html(`
                             <div class="text-warning">
@@ -446,7 +472,7 @@
                                 Validade: ${response.validade}</small>
                             </div>
                         `);
-                        
+
                     } else {
                         $('#resultado-validacao').html(`
                             <div class="text-warning">
@@ -457,7 +483,7 @@
                         `);
                     }
                 },
-                error: function() {
+                error: function () {
                     $('#loading-validacao').hide();
                     $('#resultado-validacao').html(`
                         <div class="text-danger">
@@ -476,7 +502,7 @@
         }
 
         // Validação do formulário
-        $('#form-editar-epi').on('submit', function(e) {
+        $('#form-editar-epi').on('submit', function (e) {
             const ca = $('#ca').val();
             const nome = $('#nome').val();
             const categoria = $('#categoria').val();
@@ -491,7 +517,7 @@
             // Validação da data de validade
             const hoje = new Date();
             const dataValidade = new Date(validade_ca);
-            
+
             if (dataValidade < hoje) {
                 const confirmar = confirm('A data de validade do CA está no passado. Deseja continuar mesmo assim?');
                 if (!confirmar) {
@@ -503,19 +529,19 @@
 
         // Auto-save de rascunho (localStorage)
         const campos = ['nome', 'descricao', 'categoria', 'ca', 'validade_ca', 'fabricante', 'modelo', 'estoque_atual', 'estoque_minimo', 'preco_unitario', 'observacoes'];
-        
+
         campos.forEach(campo => {
-            $(`#${campo}`).on('input change', function() {
-                localStorage.setItem(`epi_edit_${{{ epi.id }}}_${campo}`, $(this).val());
+            $(`#${campo}`).on('input change', function () {
+                localStorage.setItem(`epi_edit_${{{ epi.id }}}_${ campo }`, $(this).val());
             });
         });
 
         // Recuperar rascunho
         $(document).ready(function() {
             campos.forEach(campo => {
-                const valorSalvo = localStorage.getItem(`epi_edit_${{{ epi.id }}}_${campo}`);
-                if (valorSalvo && !$(`#${campo}`).val()) {
-                    $(`#${campo}`).val(valorSalvo);
+                const valorSalvo = localStorage.getItem(`epi_edit_${{{ epi.id }}}_${ campo }`);
+                if (valorSalvo && !$(`#${ campo }`).val()) {
+                    $(`#${ campo }`).val(valorSalvo);
                 }
             });
         });
@@ -523,9 +549,10 @@
         // Limpar rascunho ao submeter
         $('#form-editar-epi').on('submit', function() {
             campos.forEach(campo => {
-                localStorage.removeItem(`epi_edit_${{{ epi.id }}}_${campo}`);
+                localStorage.removeItem(`epi_edit_${{{ epi.id }}}_${ campo }`);
             });
         });
     </script>
 </body>
+
 </html>

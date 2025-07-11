@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,17 +12,20 @@
         .config-card {
             background: white;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 25px;
             margin-bottom: 20px;
         }
+
         .config-item {
             border-bottom: 1px solid #dee2e6;
             padding: 15px 0;
         }
+
         .config-item:last-child {
             border-bottom: none;
         }
+
         .status-indicator {
             width: 12px;
             height: 12px;
@@ -29,9 +33,19 @@
             display: inline-block;
             margin-right: 8px;
         }
-        .status-active { background: #28a745; }
-        .status-inactive { background: #dc3545; }
-        .status-warning { background: #ffc107; }
+
+        .status-active {
+            background: #28a745;
+        }
+
+        .status-inactive {
+            background: #dc3545;
+        }
+
+        .status-warning {
+            background: #ffc107;
+        }
+
         .alert-config {
             background: #f8f9fa;
             border-left: 4px solid #007bff;
@@ -39,6 +53,7 @@
             border-radius: 0 8px 8px 0;
             margin-bottom: 20px;
         }
+
         .backup-info {
             background: #e9ecef;
             padding: 15px;
@@ -47,6 +62,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -102,15 +118,18 @@
                         <small>Módulo EPI: Ativo</small>
                     </div>
                     <div class="mb-2">
-                        <span class="status-indicator {{ 'status-active' if config.api_ca_ativa else 'status-inactive' }}"></span>
+                        <span
+                            class="status-indicator {{ 'status-active' if config.api_ca_ativa else 'status-inactive' }}"></span>
                         <small>API Validação CA: {{ 'Ativa' if config.api_ca_ativa else 'Inativa' }}</small>
                     </div>
                     <div class="mb-2">
-                        <span class="status-indicator {{ 'status-active' if config.alertas_ativos else 'status-inactive' }}"></span>
+                        <span
+                            class="status-indicator {{ 'status-active' if config.alertas_ativos else 'status-inactive' }}"></span>
                         <small>Alertas: {{ 'Ativos' if config.alertas_ativos else 'Inativos' }}</small>
                     </div>
                     <div class="mb-2">
-                        <span class="status-indicator {{ 'status-active' if config.emails_ativos else 'status-inactive' }}"></span>
+                        <span
+                            class="status-indicator {{ 'status-active' if config.emails_ativos else 'status-inactive' }}"></span>
                         <small>E-mails: {{ 'Ativos' if config.emails_ativos else 'Inativos' }}</small>
                     </div>
                 </div>
@@ -132,14 +151,15 @@
 
                 <!-- Mensagens de feedback -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
+                    role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
                 {% endwith %}
 
                 <div class="tab-content">
@@ -152,17 +172,18 @@
 
                             <form method="POST" action="{{ url_for('epi.salvar_configuracoes') }}">
                                 <input type="hidden" name="secao" value="alertas">
-                                
+
                                 <div class="config-item">
                                     <div class="row">
                                         <div class="col-md-8">
                                             <h6>Alertas Automáticos</h6>
-                                            <p class="text-muted mb-0">Habilita ou desabilita o sistema de alertas automáticos</p>
+                                            <p class="text-muted mb-0">Habilita ou desabilita o sistema de alertas
+                                                automáticos</p>
                                         </div>
                                         <div class="col-md-4 text-end">
                                             <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="alertas_ativos" 
-                                                       name="alertas_ativos" {{ 'checked' if config.alertas_ativos }}>
+                                                <input class="form-check-input" type="checkbox" id="alertas_ativos"
+                                                    name="alertas_ativos" {{ 'checked' if config.alertas_ativos }}>
                                                 <label class="form-check-label" for="alertas_ativos">
                                                     {{ 'Ativo' if config.alertas_ativos else 'Inativo' }}
                                                 </label>
@@ -177,20 +198,23 @@
                                             <label for="dias_alerta_vencimento" class="form-label">
                                                 <strong>Alertar vencimento CA (dias de antecedência)</strong>
                                             </label>
-                                            <input type="number" class="form-control" id="dias_alerta_vencimento" 
-                                                   name="dias_alerta_vencimento" 
-                                                   value="{{ config.dias_alerta_vencimento or 30 }}" 
-                                                   min="1" max="365">
+                                            <input type="number" class="form-control" id="dias_alerta_vencimento"
+                                                name="dias_alerta_vencimento"
+                                                value="{{ config.dias_alerta_vencimento or 30 }}" min="1" max="365">
                                             <small class="text-muted">Padrão: 30 dias</small>
                                         </div>
                                         <div class="col-md-6">
                                             <label for="frequencia_verificacao" class="form-label">
                                                 <strong>Frequência de verificação</strong>
                                             </label>
-                                            <select class="form-select" id="frequencia_verificacao" name="frequencia_verificacao">
-                                                <option value="diaria" {{ 'selected' if config.frequencia_verificacao == 'diaria' }}>Diária</option>
-                                                <option value="semanal" {{ 'selected' if config.frequencia_verificacao == 'semanal' }}>Semanal</option>
-                                                <option value="mensal" {{ 'selected' if config.frequencia_verificacao == 'mensal' }}>Mensal</option>
+                                            <select class="form-select" id="frequencia_verificacao"
+                                                name="frequencia_verificacao">
+                                                <option value="diaria" {{ 'selected' if
+                                                    config.frequencia_verificacao=='diaria' }}>Diária</option>
+                                                <option value="semanal" {{ 'selected' if
+                                                    config.frequencia_verificacao=='semanal' }}>Semanal</option>
+                                                <option value="mensal" {{ 'selected' if
+                                                    config.frequencia_verificacao=='mensal' }}>Mensal</option>
                                             </select>
                                         </div>
                                     </div>
@@ -201,8 +225,9 @@
                                     <div class="row">
                                         <div class="col-md-4">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="alerta_vencimento_ca" 
-                                                       name="alerta_vencimento_ca" {{ 'checked' if config.alerta_vencimento_ca }}>
+                                                <input class="form-check-input" type="checkbox"
+                                                    id="alerta_vencimento_ca" name="alerta_vencimento_ca" {{ 'checked'
+                                                    if config.alerta_vencimento_ca }}>
                                                 <label class="form-check-label" for="alerta_vencimento_ca">
                                                     Vencimento de CA
                                                 </label>
@@ -210,8 +235,9 @@
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="alerta_estoque_baixo" 
-                                                       name="alerta_estoque_baixo" {{ 'checked' if config.alerta_estoque_baixo }}>
+                                                <input class="form-check-input" type="checkbox"
+                                                    id="alerta_estoque_baixo" name="alerta_estoque_baixo" {{ 'checked'
+                                                    if config.alerta_estoque_baixo }}>
                                                 <label class="form-check-label" for="alerta_estoque_baixo">
                                                     Estoque baixo
                                                 </label>
@@ -219,8 +245,9 @@
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="alerta_devolucao_atraso" 
-                                                       name="alerta_devolucao_atraso" {{ 'checked' if config.alerta_devolucao_atraso }}>
+                                                <input class="form-check-input" type="checkbox"
+                                                    id="alerta_devolucao_atraso" name="alerta_devolucao_atraso"
+                                                    {{ 'checked' if config.alerta_devolucao_atraso }}>
                                                 <label class="form-check-label" for="alerta_devolucao_atraso">
                                                     Devolução em atraso
                                                 </label>
@@ -247,17 +274,18 @@
 
                             <form method="POST" action="{{ url_for('epi.salvar_configuracoes') }}">
                                 <input type="hidden" name="secao" value="emails">
-                                
+
                                 <div class="config-item">
                                     <div class="row">
                                         <div class="col-md-8">
                                             <h6>Notificações por E-mail</h6>
-                                            <p class="text-muted mb-0">Habilita envio automático de e-mails de alerta</p>
+                                            <p class="text-muted mb-0">Habilita envio automático de e-mails de alerta
+                                            </p>
                                         </div>
                                         <div class="col-md-4 text-end">
                                             <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="emails_ativos" 
-                                                       name="emails_ativos" {{ 'checked' if config.emails_ativos }}>
+                                                <input class="form-check-input" type="checkbox" id="emails_ativos"
+                                                    name="emails_ativos" {{ 'checked' if config.emails_ativos }}>
                                                 <label class="form-check-label" for="emails_ativos">
                                                     {{ 'Ativo' if config.emails_ativos else 'Inativo' }}
                                                 </label>
@@ -272,17 +300,16 @@
                                             <label for="smtp_servidor" class="form-label">
                                                 <strong>Servidor SMTP</strong>
                                             </label>
-                                            <input type="text" class="form-control" id="smtp_servidor" 
-                                                   name="smtp_servidor" value="{{ config.smtp_servidor or '' }}"
-                                                   placeholder="ex: smtp.gmail.com">
+                                            <input type="text" class="form-control" id="smtp_servidor"
+                                                name="smtp_servidor" value="{{ config.smtp_servidor or '' }}"
+                                                placeholder="ex: smtp.gmail.com">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="smtp_porta" class="form-label">
                                                 <strong>Porta SMTP</strong>
                                             </label>
-                                            <input type="number" class="form-control" id="smtp_porta" 
-                                                   name="smtp_porta" value="{{ config.smtp_porta or 587 }}"
-                                                   placeholder="587">
+                                            <input type="number" class="form-control" id="smtp_porta" name="smtp_porta"
+                                                value="{{ config.smtp_porta or 587 }}" placeholder="587">
                                         </div>
                                     </div>
                                 </div>
@@ -293,17 +320,17 @@
                                             <label for="email_remetente" class="form-label">
                                                 <strong>E-mail Remetente</strong>
                                             </label>
-                                            <input type="email" class="form-control" id="email_remetente" 
-                                                   name="email_remetente" value="{{ config.email_remetente or '' }}"
-                                                   placeholder="sistema@empresa.com">
+                                            <input type="email" class="form-control" id="email_remetente"
+                                                name="email_remetente" value="{{ config.email_remetente or '' }}"
+                                                placeholder="sistema@empresa.com">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="senha_email" class="form-label">
                                                 <strong>Senha do E-mail</strong>
                                             </label>
-                                            <input type="password" class="form-control" id="senha_email" 
-                                                   name="senha_email" value="{{ config.senha_email or '' }}"
-                                                   placeholder="••••••••">
+                                            <input type="password" class="form-control" id="senha_email"
+                                                name="senha_email" value="{{ config.senha_email or '' }}"
+                                                placeholder="••••••••">
                                         </div>
                                     </div>
                                 </div>
@@ -312,8 +339,9 @@
                                     <label for="emails_destinatarios" class="form-label">
                                         <strong>E-mails de Destino (separados por vírgula)</strong>
                                     </label>
-                                    <textarea class="form-control" id="emails_destinatarios" name="emails_destinatarios" 
-                                              rows="3" placeholder="admin@empresa.com, rh@empresa.com">{{ config.emails_destinatarios or '' }}</textarea>
+                                    <textarea class="form-control" id="emails_destinatarios" name="emails_destinatarios"
+                                        rows="3"
+                                        placeholder="admin@empresa.com, rh@empresa.com">{{ config.emails_destinatarios or '' }}</textarea>
                                     <small class="text-muted">E-mails que receberão os alertas automáticos</small>
                                 </div>
 
@@ -321,8 +349,8 @@
                                     <div class="row">
                                         <div class="col-md-4">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="email_ssl" 
-                                                       name="email_ssl" {{ 'checked' if config.email_ssl }}>
+                                                <input class="form-check-input" type="checkbox" id="email_ssl"
+                                                    name="email_ssl" {{ 'checked' if config.email_ssl }}>
                                                 <label class="form-check-label" for="email_ssl">
                                                     Usar SSL/TLS
                                                 </label>
@@ -354,23 +382,25 @@
 
                             <div class="alert-config">
                                 <i class="fas fa-info-circle me-2"></i>
-                                <strong>Informação:</strong> Configure a integração com a API oficial do Ministério do Trabalho 
+                                <strong>Informação:</strong> Configure a integração com a API oficial do Ministério do
+                                Trabalho
                                 para validação automática de CAs (Certificados de Aprovação).
                             </div>
 
                             <form method="POST" action="{{ url_for('epi.salvar_configuracoes') }}">
                                 <input type="hidden" name="secao" value="api">
-                                
+
                                 <div class="config-item">
                                     <div class="row">
                                         <div class="col-md-8">
                                             <h6>API de Validação</h6>
-                                            <p class="text-muted mb-0">Habilita validação automática de CAs via API externa</p>
+                                            <p class="text-muted mb-0">Habilita validação automática de CAs via API
+                                                externa</p>
                                         </div>
                                         <div class="col-md-4 text-end">
                                             <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="api_ca_ativa" 
-                                                       name="api_ca_ativa" {{ 'checked' if config.api_ca_ativa }}>
+                                                <input class="form-check-input" type="checkbox" id="api_ca_ativa"
+                                                    name="api_ca_ativa" {{ 'checked' if config.api_ca_ativa }}>
                                                 <label class="form-check-label" for="api_ca_ativa">
                                                     {{ 'Ativa' if config.api_ca_ativa else 'Inativa' }}
                                                 </label>
@@ -383,9 +413,9 @@
                                     <label for="api_ca_url" class="form-label">
                                         <strong>URL da API</strong>
                                     </label>
-                                    <input type="url" class="form-control" id="api_ca_url" 
-                                           name="api_ca_url" value="{{ config.api_ca_url or '' }}"
-                                           placeholder="https://api.trabalho.gov.br/ca/validar">
+                                    <input type="url" class="form-control" id="api_ca_url" name="api_ca_url"
+                                        value="{{ config.api_ca_url or '' }}"
+                                        placeholder="https://api.trabalho.gov.br/ca/validar">
                                     <small class="text-muted">URL base da API de validação de CAs</small>
                                 </div>
 
@@ -395,17 +425,17 @@
                                             <label for="api_ca_token" class="form-label">
                                                 <strong>Token de Autenticação</strong>
                                             </label>
-                                            <input type="password" class="form-control" id="api_ca_token" 
-                                                   name="api_ca_token" value="{{ config.api_ca_token or '' }}"
-                                                   placeholder="••••••••">
+                                            <input type="password" class="form-control" id="api_ca_token"
+                                                name="api_ca_token" value="{{ config.api_ca_token or '' }}"
+                                                placeholder="••••••••">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="api_ca_timeout" class="form-label">
                                                 <strong>Timeout (segundos)</strong>
                                             </label>
-                                            <input type="number" class="form-control" id="api_ca_timeout" 
-                                                   name="api_ca_timeout" value="{{ config.api_ca_timeout or 30 }}"
-                                                   min="1" max="300">
+                                            <input type="number" class="form-control" id="api_ca_timeout"
+                                                name="api_ca_timeout" value="{{ config.api_ca_timeout or 30 }}" min="1"
+                                                max="300">
                                         </div>
                                     </div>
                                 </div>
@@ -414,8 +444,8 @@
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="api_ca_cache" 
-                                                       name="api_ca_cache" {{ 'checked' if config.api_ca_cache }}>
+                                                <input class="form-check-input" type="checkbox" id="api_ca_cache"
+                                                    name="api_ca_cache" {{ 'checked' if config.api_ca_cache }}>
                                                 <label class="form-check-label" for="api_ca_cache">
                                                     Cache de resultados (24h)
                                                 </label>
@@ -446,9 +476,10 @@
                             </h5>
 
                             <div class="backup-info">
-                                <strong>Último backup:</strong> {{ ultimo_backup.strftime('%d/%m/%Y %H:%M') if ultimo_backup else 'Nunca' }}<br>
+                                <strong>Último backup:</strong> {{ ultimo_backup.strftime('%d/%m/%Y %H:%M') if
+                                ultimo_backup else 'Nunca' }}<br>
                                 <strong>Tamanho:</strong> {{ tamanho_backup or 'N/A' }}<br>
-                                <strong>Status:</strong> 
+                                <strong>Status:</strong>
                                 <span class="badge bg-{{ 'success' if status_backup == 'ok' else 'warning' }}">
                                     {{ status_backup_texto or 'Pendente' }}
                                 </span>
@@ -458,29 +489,33 @@
                                 <h6>Backup Automático</h6>
                                 <form method="POST" action="{{ url_for('epi.salvar_configuracoes') }}">
                                     <input type="hidden" name="secao" value="backup">
-                                    
+
                                     <div class="row">
                                         <div class="col-md-6">
                                             <label for="backup_frequencia" class="form-label">
                                                 <strong>Frequência</strong>
                                             </label>
                                             <select class="form-select" id="backup_frequencia" name="backup_frequencia">
-                                                <option value="desabilitado" {{ 'selected' if config.backup_frequencia == 'desabilitado' }}>Desabilitado</option>
-                                                <option value="diario" {{ 'selected' if config.backup_frequencia == 'diario' }}>Diário</option>
-                                                <option value="semanal" {{ 'selected' if config.backup_frequencia == 'semanal' }}>Semanal</option>
-                                                <option value="mensal" {{ 'selected' if config.backup_frequencia == 'mensal' }}>Mensal</option>
+                                                <option value="desabilitado" {{ 'selected' if
+                                                    config.backup_frequencia=='desabilitado' }}>Desabilitado</option>
+                                                <option value="diario" {{ 'selected' if
+                                                    config.backup_frequencia=='diario' }}>Diário</option>
+                                                <option value="semanal" {{ 'selected' if
+                                                    config.backup_frequencia=='semanal' }}>Semanal</option>
+                                                <option value="mensal" {{ 'selected' if
+                                                    config.backup_frequencia=='mensal' }}>Mensal</option>
                                             </select>
                                         </div>
                                         <div class="col-md-6">
                                             <label for="backup_retencao" class="form-label">
                                                 <strong>Manter backups (dias)</strong>
                                             </label>
-                                            <input type="number" class="form-control" id="backup_retencao" 
-                                                   name="backup_retencao" value="{{ config.backup_retencao or 30 }}"
-                                                   min="1" max="365">
+                                            <input type="number" class="form-control" id="backup_retencao"
+                                                name="backup_retencao" value="{{ config.backup_retencao or 30 }}"
+                                                min="1" max="365">
                                         </div>
                                     </div>
-                                    
+
                                     <div class="mt-3 text-end">
                                         <button type="submit" class="btn btn-primary">
                                             <i class="fas fa-save me-2"></i>Salvar Configuração
@@ -536,34 +571,34 @@
                                             <tr>
                                                 <td><strong>{{ usuario.nome }}</strong></td>
                                                 <td>
-                                                    <input type="checkbox" class="form-check-input" 
-                                                           data-user="{{ usuario.id }}" data-perm="visualizar"
-                                                           {{ 'checked' if usuario.perm_epi_visualizar }}>
+                                                    <input type="checkbox" class="form-check-input"
+                                                        data-user="{{ usuario.id }}" data-perm="visualizar" {{ 'checked'
+                                                        if usuario.perm_epi_visualizar }}>
                                                 </td>
                                                 <td>
-                                                    <input type="checkbox" class="form-check-input" 
-                                                           data-user="{{ usuario.id }}" data-perm="cadastrar"
-                                                           {{ 'checked' if usuario.perm_epi_cadastrar }}>
+                                                    <input type="checkbox" class="form-check-input"
+                                                        data-user="{{ usuario.id }}" data-perm="cadastrar" {{ 'checked'
+                                                        if usuario.perm_epi_cadastrar }}>
                                                 </td>
                                                 <td>
-                                                    <input type="checkbox" class="form-check-input" 
-                                                           data-user="{{ usuario.id }}" data-perm="editar"
-                                                           {{ 'checked' if usuario.perm_epi_editar }}>
+                                                    <input type="checkbox" class="form-check-input"
+                                                        data-user="{{ usuario.id }}" data-perm="editar" {{ 'checked' if
+                                                        usuario.perm_epi_editar }}>
                                                 </td>
                                                 <td>
-                                                    <input type="checkbox" class="form-check-input" 
-                                                           data-user="{{ usuario.id }}" data-perm="excluir"
-                                                           {{ 'checked' if usuario.perm_epi_excluir }}>
+                                                    <input type="checkbox" class="form-check-input"
+                                                        data-user="{{ usuario.id }}" data-perm="excluir" {{ 'checked' if
+                                                        usuario.perm_epi_excluir }}>
                                                 </td>
                                                 <td>
-                                                    <input type="checkbox" class="form-check-input" 
-                                                           data-user="{{ usuario.id }}" data-perm="relatorios"
-                                                           {{ 'checked' if usuario.perm_epi_relatorios }}>
+                                                    <input type="checkbox" class="form-check-input"
+                                                        data-user="{{ usuario.id }}" data-perm="relatorios" {{ 'checked'
+                                                        if usuario.perm_epi_relatorios }}>
                                                 </td>
                                                 <td>
-                                                    <input type="checkbox" class="form-check-input" 
-                                                           data-user="{{ usuario.id }}" data-perm="configuracoes"
-                                                           {{ 'checked' if usuario.perm_epi_configuracoes }}>
+                                                    <input type="checkbox" class="form-check-input"
+                                                        data-user="{{ usuario.id }}" data-perm="configuracoes"
+                                                        {{ 'checked' if usuario.perm_epi_configuracoes }}>
                                                 </td>
                                             </tr>
                                             {% endfor %}
@@ -588,24 +623,24 @@
 
                             <form method="POST" action="{{ url_for('epi.salvar_configuracoes') }}">
                                 <input type="hidden" name="secao" value="sistema">
-                                
+
                                 <div class="config-item">
                                     <div class="row">
                                         <div class="col-md-6">
                                             <label for="empresa_nome" class="form-label">
                                                 <strong>Nome da Empresa</strong>
                                             </label>
-                                            <input type="text" class="form-control" id="empresa_nome" 
-                                                   name="empresa_nome" value="{{ config.empresa_nome or '' }}"
-                                                   placeholder="Sua Empresa LTDA">
+                                            <input type="text" class="form-control" id="empresa_nome"
+                                                name="empresa_nome" value="{{ config.empresa_nome or '' }}"
+                                                placeholder="Sua Empresa LTDA">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="empresa_cnpj" class="form-label">
                                                 <strong>CNPJ</strong>
                                             </label>
-                                            <input type="text" class="form-control" id="empresa_cnpj" 
-                                                   name="empresa_cnpj" value="{{ config.empresa_cnpj or '' }}"
-                                                   placeholder="00.000.000/0001-00">
+                                            <input type="text" class="form-control" id="empresa_cnpj"
+                                                name="empresa_cnpj" value="{{ config.empresa_cnpj or '' }}"
+                                                placeholder="00.000.000/0001-00">
                                         </div>
                                     </div>
                                 </div>
@@ -614,8 +649,8 @@
                                     <label for="empresa_endereco" class="form-label">
                                         <strong>Endereço Completo</strong>
                                     </label>
-                                    <textarea class="form-control" id="empresa_endereco" name="empresa_endereco" 
-                                              rows="2">{{ config.empresa_endereco or '' }}</textarea>
+                                    <textarea class="form-control" id="empresa_endereco" name="empresa_endereco"
+                                        rows="2">{{ config.empresa_endereco or '' }}</textarea>
                                 </div>
 
                                 <div class="config-item">
@@ -624,16 +659,16 @@
                                             <label for="logo_empresa" class="form-label">
                                                 <strong>Logo da Empresa (URL)</strong>
                                             </label>
-                                            <input type="url" class="form-control" id="logo_empresa" 
-                                                   name="logo_empresa" value="{{ config.logo_empresa or '' }}"
-                                                   placeholder="https://empresa.com/logo.png">
+                                            <input type="url" class="form-control" id="logo_empresa" name="logo_empresa"
+                                                value="{{ config.logo_empresa or '' }}"
+                                                placeholder="https://empresa.com/logo.png">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="cor_tema" class="form-label">
                                                 <strong>Cor do Tema</strong>
                                             </label>
-                                            <input type="color" class="form-control form-control-color" id="cor_tema" 
-                                                   name="cor_tema" value="{{ config.cor_tema or '#007bff' }}">
+                                            <input type="color" class="form-control form-control-color" id="cor_tema"
+                                                name="cor_tema" value="{{ config.cor_tema or '#007bff' }}">
                                         </div>
                                     </div>
                                 </div>
@@ -642,8 +677,8 @@
                                     <div class="row">
                                         <div class="col-md-4">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="debug_mode" 
-                                                       name="debug_mode" {{ 'checked' if config.debug_mode }}>
+                                                <input class="form-check-input" type="checkbox" id="debug_mode"
+                                                    name="debug_mode" {{ 'checked' if config.debug_mode }}>
                                                 <label class="form-check-label" for="debug_mode">
                                                     Modo Debug
                                                 </label>
@@ -651,8 +686,8 @@
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="manutencao" 
-                                                       name="manutencao" {{ 'checked' if config.manutencao }}>
+                                                <input class="form-check-input" type="checkbox" id="manutencao"
+                                                    name="manutencao" {{ 'checked' if config.manutencao }}>
                                                 <label class="form-check-label" for="manutencao">
                                                     Modo Manutenção
                                                 </label>
@@ -660,8 +695,8 @@
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="logs_detalhados" 
-                                                       name="logs_detalhados" {{ 'checked' if config.logs_detalhados }}>
+                                                <input class="form-check-input" type="checkbox" id="logs_detalhados"
+                                                    name="logs_detalhados" {{ 'checked' if config.logs_detalhados }}>
                                                 <label class="form-check-label" for="logs_detalhados">
                                                     Logs Detalhados
                                                 </label>
@@ -693,7 +728,8 @@
                                 <div class="col-md-6">
                                     <strong>Espaço em Disco:</strong> {{ espaco_disco or 'N/A' }}<br>
                                     <strong>Memória RAM:</strong> {{ uso_memoria or 'N/A' }}<br>
-                                    <strong>Último Acesso:</strong> {{ ultimo_acesso.strftime('%d/%m/%Y %H:%M') if ultimo_acesso else 'N/A' }}<br>
+                                    <strong>Último Acesso:</strong> {{ ultimo_acesso.strftime('%d/%m/%Y %H:%M') if
+                                    ultimo_acesso else 'N/A' }}<br>
                                     <strong>Usuários Ativos:</strong> {{ usuarios_ativos or 0 }}
                                 </div>
                             </div>
@@ -707,7 +743,7 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
+
     <script>
         // Funções de teste
         function testarEmail() {
@@ -723,14 +759,14 @@
                 url: '/epi/api/testar-email',
                 method: 'POST',
                 data: dados,
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         alert('✅ Configuração de e-mail funcionando corretamente!');
                     } else {
                         alert('❌ Erro na configuração: ' + response.message);
                     }
                 },
-                error: function() {
+                error: function () {
                     alert('❌ Erro ao testar configuração de e-mail.');
                 }
             });
@@ -747,14 +783,14 @@
                 url: '/epi/api/testar-api-ca',
                 method: 'POST',
                 data: dados,
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         alert('✅ Conexão com API funcionando corretamente!');
                     } else {
                         alert('❌ Erro na conexão: ' + response.message);
                     }
                 },
-                error: function() {
+                error: function () {
                     alert('❌ Erro ao testar conexão com API.');
                 }
             });
@@ -766,7 +802,7 @@
                 $.ajax({
                     url: '/epi/api/criar-backup',
                     method: 'POST',
-                    success: function(response) {
+                    success: function (response) {
                         if (response.success) {
                             alert('✅ Backup criado com sucesso!');
                             location.reload();
@@ -774,7 +810,7 @@
                             alert('❌ Erro ao criar backup: ' + response.message);
                         }
                     },
-                    error: function() {
+                    error: function () {
                         alert('❌ Erro ao criar backup.');
                     }
                 });
@@ -789,12 +825,12 @@
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.zip,.sql';
-            input.onchange = function(e) {
+            input.onchange = function (e) {
                 const file = e.target.files[0];
                 if (file) {
                     const formData = new FormData();
                     formData.append('backup', file);
-                    
+
                     if (confirm('⚠️ ATENÇÃO: Restaurar um backup irá sobrescrever todos os dados atuais. Continuar?')) {
                         $.ajax({
                             url: '/epi/api/restaurar-backup',
@@ -802,7 +838,7 @@
                             data: formData,
                             processData: false,
                             contentType: false,
-                            success: function(response) {
+                            success: function (response) {
                                 if (response.success) {
                                     alert('✅ Backup restaurado com sucesso!');
                                     location.reload();
@@ -810,7 +846,7 @@
                                     alert('❌ Erro ao restaurar backup: ' + response.message);
                                 }
                             },
-                            error: function() {
+                            error: function () {
                                 alert('❌ Erro ao restaurar backup.');
                             }
                         });
@@ -827,8 +863,8 @@
         // Salvar permissões de usuários
         function salvarPermissoes() {
             const permissoes = [];
-            
-            $('input[data-user]').each(function() {
+
+            $('input[data-user]').each(function () {
                 permissoes.push({
                     user_id: $(this).data('user'),
                     permissao: $(this).data('perm'),
@@ -840,14 +876,14 @@
                 url: '/epi/api/salvar-permissoes',
                 method: 'POST',
                 data: { permissoes: JSON.stringify(permissoes) },
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         alert('✅ Permissões salvas com sucesso!');
                     } else {
                         alert('❌ Erro ao salvar permissões: ' + response.message);
                     }
                 },
-                error: function() {
+                error: function () {
                     alert('❌ Erro ao salvar permissões.');
                 }
             });
@@ -857,7 +893,7 @@
         function salvarTodasConfiguracoes() {
             if (confirm('Deseja salvar todas as configurações de todas as abas?')) {
                 // Submeter todos os formulários
-                $('form').each(function() {
+                $('form').each(function () {
                     if ($(this).find('input[name="secao"]').length > 0) {
                         $(this).submit();
                     }
@@ -871,7 +907,7 @@
                 $.ajax({
                     url: '/epi/api/restaurar-config-padrao',
                     method: 'POST',
-                    success: function(response) {
+                    success: function (response) {
                         if (response.success) {
                             alert('✅ Configurações restauradas para o padrão!');
                             location.reload();
@@ -879,7 +915,7 @@
                             alert('❌ Erro ao restaurar configurações: ' + response.message);
                         }
                     },
-                    error: function() {
+                    error: function () {
                         alert('❌ Erro ao restaurar configurações.');
                     }
                 });
@@ -887,7 +923,7 @@
         }
 
         // Atualizar labels dos switches
-        $('.form-check-input[type="checkbox"]').on('change', function() {
+        $('.form-check-input[type="checkbox"]').on('change', function () {
             const label = $(this).siblings('.form-check-label');
             if ($(this).is(':checked')) {
                 label.text('Ativo');
@@ -897,4 +933,5 @@
         });
     </script>
 </body>
+
 </html>

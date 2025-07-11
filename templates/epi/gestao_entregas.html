@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,7 +33,7 @@
         .card {
             border: none;
             border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .page-header {
@@ -52,7 +53,7 @@
         .funcionario-card:hover {
             transform: translateY(-2px);
             border-color: var(--primary-color);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
         }
 
         .status-badge {
@@ -62,8 +63,15 @@
             font-weight: 500;
         }
 
-        .status-assinado { background-color: #d4edda; color: #155724; }
-        .status-pendente { background-color: #fff3cd; color: #856404; }
+        .status-assinado {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-pendente {
+            background-color: #fff3cd;
+            color: #856404;
+        }
 
         .epi-list-item {
             background: #f8f9fa;
@@ -85,7 +93,7 @@
             background: white;
             border: 1px solid #ddd;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             max-height: 300px;
             overflow-y: auto;
             z-index: 1000;
@@ -107,6 +115,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
@@ -144,15 +153,16 @@
     <div class="container">
         <!-- Alerts -->
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
+            role="alert">
+            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
         {% endwith %}
 
         <!-- Buscar Funcionário -->
@@ -166,8 +176,8 @@
                     </div>
                     <div class="card-body">
                         <div class="search-funcionario">
-                            <input type="text" class="form-control" id="busca-funcionario" 
-                                   placeholder="Digite o nome ou CPF do funcionário...">
+                            <input type="text" class="form-control" id="busca-funcionario"
+                                placeholder="Digite o nome ou CPF do funcionário...">
                             <div class="dropdown-funcionarios" id="dropdown-funcionarios">
                                 <!-- Opções serão carregadas via JavaScript -->
                             </div>
@@ -233,7 +243,8 @@
                                         <td>
                                             <strong>{{ declaracao.data_declaracao.strftime('%d/%m/%Y') }}</strong>
                                             <br><small class="text-muted">
-                                                {{ declaracao.data_cadastro.strftime('%H:%M') if declaracao.data_cadastro }}
+                                                {{ declaracao.data_cadastro.strftime('%H:%M') if
+                                                declaracao.data_cadastro }}
                                             </small>
                                         </td>
                                         <td>
@@ -247,51 +258,52 @@
                                             <div class="epi-summary">
                                                 {% set entregas = declaracao.entregas %}
                                                 {% if entregas %}
-                                                    {% for entrega in entregas[:3] %}
-                                                        <div class="epi-list-item">
-                                                            <small>
-                                                                <i class="fas fa-box me-1"></i>
-                                                                {{ entrega.epi.nome }}
-                                                                <span class="text-muted">(CA: {{ entrega.epi.codigo_ca }})</span>
-                                                            </small>
-                                                        </div>
-                                                    {% endfor %}
-                                                    {% if entregas|length > 3 %}
-                                                        <small class="text-muted">
-                                                            + {{ entregas|length - 3 }} outros EPIs
-                                                        </small>
-                                                    {% endif %}
+                                                {% for entrega in entregas[:3] %}
+                                                <div class="epi-list-item">
+                                                    <small>
+                                                        <i class="fas fa-box me-1"></i>
+                                                        {{ entrega.epi.nome }}
+                                                        <span class="text-muted">(CA: {{ entrega.epi.codigo_ca
+                                                            }})</span>
+                                                    </small>
+                                                </div>
+                                                {% endfor %}
+                                                {% if entregas|length > 3 %}
+                                                <small class="text-muted">
+                                                    + {{ entregas|length - 3 }} outros EPIs
+                                                </small>
+                                                {% endif %}
                                                 {% else %}
-                                                    <span class="text-muted">Nenhum EPI</span>
+                                                <span class="text-muted">Nenhum EPI</span>
                                                 {% endif %}
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="status-badge status-{{ 'assinado' if declaracao.assinado else 'pendente' }}">
-                                                <i class="fas fa-{{ 'check-circle' if declaracao.assinado else 'clock' }} me-1"></i>
+                                            <span
+                                                class="status-badge status-{{ 'assinado' if declaracao.assinado else 'pendente' }}">
+                                                <i
+                                                    class="fas fa-{{ 'check-circle' if declaracao.assinado else 'clock' }} me-1"></i>
                                                 {{ 'Assinado' if declaracao.assinado else 'Pendente' }}
                                             </span>
                                         </td>
                                         <td>
                                             <div class="btn-group btn-group-sm" role="group">
-                                                <button type="button" class="btn btn-outline-info" 
-                                                        onclick="visualizarDeclaracao({{ declaracao.id }})" 
-                                                        title="Visualizar">
+                                                <button type="button" class="btn btn-outline-info"
+                                                    onclick="visualizarDeclaracao({{ declaracao.id }})"
+                                                    title="Visualizar">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
-                                                <button type="button" class="btn btn-outline-success" 
-                                                        onclick="gerarPDF({{ declaracao.id }})" 
-                                                        title="Gerar PDF">
+                                                <button type="button" class="btn btn-outline-success"
+                                                    onclick="gerarPDF({{ declaracao.id }})" title="Gerar PDF">
                                                     <i class="fas fa-file-pdf"></i>
                                                 </button>
-                                                <button type="button" class="btn btn-outline-primary" 
-                                                        onclick="editarDeclaracao({{ declaracao.id }})" 
-                                                        title="Editar">
+                                                <button type="button" class="btn btn-outline-primary"
+                                                    onclick="editarDeclaracao({{ declaracao.id }})" title="Editar">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button type="button" class="btn btn-outline-warning" 
-                                                        onclick="historicoFuncionario({{ declaracao.funcionario_id }})" 
-                                                        title="Histórico">
+                                                <button type="button" class="btn btn-outline-warning"
+                                                    onclick="historicoFuncionario({{ declaracao.funcionario_id }})"
+                                                    title="Histórico">
                                                     <i class="fas fa-history"></i>
                                                 </button>
                                             </div>
@@ -326,8 +338,8 @@
                                     Funcionário <span class="text-danger">*</span>
                                 </label>
                                 <div class="search-funcionario">
-                                    <input type="text" class="form-control" id="funcionario-selecionado" 
-                                           placeholder="Digite o nome ou CPF do funcionário..." required>
+                                    <input type="text" class="form-control" id="funcionario-selecionado"
+                                        placeholder="Digite o nome ou CPF do funcionário..." required>
                                     <input type="hidden" id="funcionario-id">
                                     <div class="dropdown-funcionarios" id="dropdown-funcionarios-modal">
                                         <!-- Opções serão carregadas via JavaScript -->
@@ -376,8 +388,8 @@
                                 <h6>Selecionar EPIs para Entrega:</h6>
                                 <div class="row mb-3">
                                     <div class="col-md-6">
-                                        <input type="text" class="form-control" id="busca-epi" 
-                                               placeholder="Buscar EPI por nome ou CA...">
+                                        <input type="text" class="form-control" id="busca-epi"
+                                            placeholder="Buscar EPI por nome ou CA...">
                                     </div>
                                     <div class="col-md-4">
                                         <select class="form-select" id="filtro-tipo-epi">
@@ -393,13 +405,15 @@
                                         </select>
                                     </div>
                                     <div class="col-md-2">
-                                        <button type="button" class="btn btn-outline-primary w-100" onclick="carregarEPIs()">
+                                        <button type="button" class="btn btn-outline-primary w-100"
+                                            onclick="carregarEPIs()">
                                             <i class="fas fa-search"></i>
                                         </button>
                                     </div>
                                 </div>
 
-                                <div id="lista-epis-disponiveis" class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+                                <div id="lista-epis-disponiveis" class="border rounded p-3"
+                                    style="max-height: 400px; overflow-y: auto;">
                                     <!-- EPIs disponíveis serão carregados via JavaScript -->
                                 </div>
                             </div>
@@ -417,8 +431,8 @@
                         <div class="row">
                             <div class="col-12">
                                 <label for="observacoes" class="form-label">Observações</label>
-                                <textarea class="form-control" id="observacoes" rows="3" 
-                                         placeholder="Observações sobre a entrega..."></textarea>
+                                <textarea class="form-control" id="observacoes" rows="3"
+                                    placeholder="Observações sobre a entrega..."></textarea>
                             </div>
                         </div>
                     </form>
@@ -442,7 +456,7 @@
         let funcionariosSelecionados = [];
         let episSelecionados = [];
 
-        $(document).ready(function() {
+        $(document).ready(function () {
             // Inicializar DataTable
             $('#tabela-declaracoes').DataTable({
                 language: {
@@ -463,14 +477,14 @@
 
         function configurarBuscaFuncionarios() {
             const inputs = ['busca-funcionario', 'funcionario-selecionado'];
-            
+
             inputs.forEach(inputId => {
                 const input = document.getElementById(inputId);
                 const dropdown = document.getElementById(
                     inputId === 'busca-funcionario' ? 'dropdown-funcionarios' : 'dropdown-funcionarios-modal'
                 );
 
-                input.addEventListener('input', function() {
+                input.addEventListener('input', function () {
                     const termo = this.value.trim();
                     if (termo.length >= 2) {
                         buscarFuncionarios(termo, dropdown, inputId);
@@ -480,7 +494,7 @@
                 });
 
                 // Fechar dropdown ao clicar fora
-                document.addEventListener('click', function(e) {
+                document.addEventListener('click', function (e) {
                     if (!input.contains(e.target) && !dropdown.contains(e.target)) {
                         dropdown.style.display = 'none';
                     }
@@ -498,7 +512,7 @@
                 { id: 4, nome: 'Ana Santos Ferreira', cpf: '789.123.456-78', cargo: 'Auxiliar Administrativo' }
             ];
 
-            const resultados = funcionarios.filter(f => 
+            const resultados = funcionarios.filter(f =>
                 f.nome.toLowerCase().includes(termo.toLowerCase()) ||
                 f.cpf.includes(termo)
             );
@@ -520,7 +534,7 @@
         function selecionarFuncionario(id, nome, cpf, cargo, inputId) {
             const input = document.getElementById(inputId);
             input.value = nome;
-            
+
             // Fechar dropdown
             const dropdown = document.getElementById(
                 inputId === 'busca-funcionario' ? 'dropdown-funcionarios' : 'dropdown-funcionarios-modal'
@@ -533,13 +547,13 @@
                 document.getElementById('funcionario-nome').textContent = nome;
                 document.getElementById('funcionario-cpf').textContent = cpf;
                 document.getElementById('funcionario-cargo').textContent = cargo;
-                
+
                 // Mostrar dados do funcionário
                 document.getElementById('dados-funcionario').style.display = 'block';
-                
+
                 // Carregar EPIs atuais do funcionário
                 carregarEPIsAtuais(id);
-                
+
                 // Carregar EPIs disponíveis
                 carregarEPIs();
             } else {
@@ -608,20 +622,20 @@
 
         function toggleEPI(id, nome, ca, estoque) {
             const checkbox = document.getElementById(`epi-${id}`);
-            
+
             if (checkbox.checked) {
                 episSelecionados.push({ id, nome, ca, estoque, quantidade: 1 });
             } else {
                 episSelecionados = episSelecionados.filter(epi => epi.id !== id);
             }
-            
+
             atualizarEPIsSelecionados();
         }
 
         function atualizarEPIsSelecionados() {
             const container = document.getElementById('epis-selecionados');
             const lista = document.getElementById('lista-epis-selecionados');
-            
+
             if (episSelecionados.length > 0) {
                 lista.innerHTML = episSelecionados.map(epi => `
                     <div class="epi-list-item">
@@ -670,11 +684,11 @@
             document.getElementById('dados-funcionario').style.display = 'none';
             document.getElementById('epis-atuais').style.display = 'none';
             document.getElementById('epis-selecionados').style.display = 'none';
-            
+
             // Configurar data padrão
             const hoje = new Date().toISOString().split('T')[0];
             document.getElementById('data-entrega').value = hoje;
-            
+
             // Abrir modal
             new bootstrap.Modal(document.getElementById('modalNovaEntrega')).show();
         }
@@ -709,10 +723,10 @@
 
             // Simular salvamento
             console.log('Dados da entrega:', dadosEntrega);
-            
+
             // Em produção, faria uma chamada AJAX
             alert('Entrega salva com sucesso!');
-            
+
             // Fechar modal e recarregar página
             bootstrap.Modal.getInstance(document.getElementById('modalNovaEntrega')).hide();
             setTimeout(() => location.reload(), 500);
@@ -750,4 +764,5 @@
         }
     </script>
 </body>
+
 </html>

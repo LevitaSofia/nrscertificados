@@ -2180,6 +2180,13 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
 
+        # Inicializar módulo EPI
+        try:
+            from integracao_epi import init_epi_module
+            init_epi_module(app)
+        except Exception as e:
+            print(f"⚠️ Aviso: Erro ao carregar módulo EPI: {str(e)}")
+
     # Configuração para acesso em rede
     import socket
     hostname = socket.gethostname()

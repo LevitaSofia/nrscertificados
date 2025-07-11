@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,7 +26,7 @@
 
         .navbar {
             background-color: var(--primary-color) !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .navbar-nav .nav-link {
@@ -43,14 +44,14 @@
         .dashboard-card {
             border: none;
             border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transition: all 0.3s;
             height: 100%;
         }
 
         .dashboard-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
         }
 
         .card-icon {
@@ -113,6 +114,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
@@ -120,11 +122,11 @@
             <a class="navbar-brand" href="{{ url_for('epi.index') }}">
                 <i class="fas fa-hard-hat me-2"></i>Sistema de Gestão de EPIs
             </a>
-            
+
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
@@ -183,15 +185,16 @@
     <div class="container">
         <!-- Alerts -->
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-custom alert-dismissible fade show" role="alert">
-                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-custom alert-dismissible fade show"
+            role="alert">
+            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
         {% endwith %}
 
         <!-- Statistics Cards -->
@@ -250,7 +253,8 @@
                     <div class="card-body p-4">
                         <i class="fas fa-plus-circle card-icon text-primary"></i>
                         <h5 class="card-title">Cadastro de EPIs</h5>
-                        <p class="card-text">Gerencie o inventário completo de EPIs, incluindo CA, validades e estoque.</p>
+                        <p class="card-text">Gerencie o inventário completo de EPIs, incluindo CA, validades e estoque.
+                        </p>
                         <a href="{{ url_for('epi.cadastro_epi') }}" class="btn btn-custom">
                             <i class="fas fa-arrow-right me-2"></i>Acessar
                         </a>
@@ -382,7 +386,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Carregar estatísticas ao carregar a página
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             carregarEstatisticas();
             carregarUltimasAtividades();
         });
@@ -390,7 +394,7 @@
         function carregarEstatisticas() {
             // Simulação de carregamento de estatísticas
             // Em produção, faria uma chamada AJAX para a API
-            
+
             setTimeout(() => {
                 document.getElementById('total-epis').textContent = '156';
                 document.getElementById('epis-vencendo').textContent = '12';
@@ -455,4 +459,5 @@
         }
     </script>
 </body>
+
 </html>

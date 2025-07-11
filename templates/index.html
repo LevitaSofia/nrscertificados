@@ -143,13 +143,20 @@
         </div>
     </div>
 
-    <!-- Espaços vazios para manter layout -->
+    <!-- Card Gestão de EPIs -->
     <div class="col-md-6 col-lg-3">
-        <div class="card h-100 shadow-sm border-light">
-            <div class="card-body text-center d-flex align-items-center justify-content-center">
-                <div class="text-muted">
-                    <i class="fas fa-plus-circle fa-2x mb-2"></i>
-                    <p class="mb-0">Espaço para futuras funcionalidades</p>
+        <div class="card h-100 shadow-sm border-warning">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-hard-hat text-warning" style="font-size: 3rem;"></i>
+                </div>
+                <h5 class="card-title">Gestão de EPIs</h5>
+                <p class="card-text">Controle de equipamentos de proteção</p>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('epi.index') }}" class="btn btn-outline-warning">Acessar EPIs</a>
+                    {% if current_user.is_authenticated and current_user.admin %}
+                    <a href="{{ url_for('epi.cadastro_epi') }}" class="btn btn-warning">Cadastrar EPI</a>
+                    {% endif %}
                 </div>
             </div>
         </div>

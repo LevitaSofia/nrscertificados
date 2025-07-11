@@ -7,33 +7,40 @@ from datetime import datetime, date
 from sqlalchemy.orm import relationship
 from sqlalchemy import ForeignKey
 
-# Assumindo que db já está definido no app principal
-# from app import db
+# Tentativa de importação do db - será definido quando importado
+try:
+    from app import db
+except ImportError:
+    # Se não conseguir importar, db será None inicialmente
+    db = None
+
 
 class EPI(db.Model):
     """Modelo para cadastro de EPIs (Inventário)"""
     __tablename__ = 'epis'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(200), nullable=False)
     descricao = db.Column(db.Text)
     codigo_ca = db.Column(db.String(20), nullable=False, unique=True)
     data_validade_ca = db.Column(db.Date, nullable=False)
     fabricante = db.Column(db.String(100))
-    tipo_protecao = db.Column(db.String(50))  # Visual, Auditiva, Respiratória, etc.
+    # Visual, Auditiva, Respiratória, etc.
+    tipo_protecao = db.Column(db.String(50))
     estoque_atual = db.Column(db.Integer, default=0)
     estoque_minimo = db.Column(db.Integer, default=0)
     imagem_url = db.Column(db.String(255))
     ativo = db.Column(db.Boolean, default=True)
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
-    data_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+    data_atualizacao = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
     # Relacionamentos
     entregas = relationship("EntregaEPI", back_populates="epi")
-    
+
     def __repr__(self):
         return f'<EPI {self.nome} - CA: {self.codigo_ca}>'
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -48,7 +55,7 @@ class EPI(db.Model):
             'imagem_url': self.imagem_url,
             'ativo': self.ativo
         }
-    
+
     @property
     def dias_para_vencimento(self):
         """Calcula quantos dias faltam para o vencimento do CA"""
@@ -56,7 +63,7 @@ class EPI(db.Model):
             delta = self.data_validade_ca - date.today()
             return delta.days
         return None
-    
+
     @property
     def status_validade(self):
         """Retorna o status da validade do CA"""
@@ -76,22 +83,23 @@ class EPI(db.Model):
 class DeclaracaoEPI(db.Model):
     """Modelo para declarações de recebimento de EPI por funcionário"""
     __tablename__ = 'declaracoes_epi'
-    
+
     id = db.Column(db.Integer, primary_key=True)
-    funcionario_id = db.Column(db.Integer, nullable=False)  # Referência ao ID do funcionário
+    # Referência ao ID do funcionário
+    funcionario_id = db.Column(db.Integer, nullable=False)
     data_declaracao = db.Column(db.Date, nullable=False, default=date.today)
     observacoes = db.Column(db.Text)
     assinado = db.Column(db.Boolean, default=False)
     data_assinatura = db.Column(db.DateTime)
     pdf_path = db.Column(db.String(255))  # Caminho para o PDF gerado
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relacionamentos
     entregas = relationship("EntregaEPI", back_populates="declaracao")
-    
+
     def __repr__(self):
         return f'<DeclaracaoEPI Funcionario:{self.funcionario_id} Data:{self.data_declaracao}>'
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -107,25 +115,27 @@ class DeclaracaoEPI(db.Model):
 class EntregaEPI(db.Model):
     """Modelo para registro de entregas/devoluções de EPIs"""
     __tablename__ = 'entregas_epi'
-    
+
     id = db.Column(db.Integer, primary_key=True)
-    declaracao_id = db.Column(db.Integer, ForeignKey('declaracoes_epi.id'), nullable=False)
+    declaracao_id = db.Column(db.Integer, ForeignKey(
+        'declaracoes_epi.id'), nullable=False)
     epi_id = db.Column(db.Integer, ForeignKey('epis.id'), nullable=False)
     data_entrega = db.Column(db.Date, nullable=False, default=date.today)
     data_devolucao = db.Column(db.Date)
     recebido = db.Column(db.Boolean, default=True)  # Campo RD
     quantidade = db.Column(db.Integer, default=1)
-    motivo_devolucao = db.Column(db.String(100))  # Danificado, Vencido, Substituição, etc.
+    # Danificado, Vencido, Substituição, etc.
+    motivo_devolucao = db.Column(db.String(100))
     observacoes = db.Column(db.Text)
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relacionamentos
     declaracao = relationship("DeclaracaoEPI", back_populates="entregas")
     epi = relationship("EPI", back_populates="entregas")
-    
+
     def __repr__(self):
         return f'<EntregaEPI EPI:{self.epi_id} Declaracao:{self.declaracao_id}>'
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -138,7 +148,7 @@ class EntregaEPI(db.Model):
             'motivo_devolucao': self.motivo_devolucao,
             'observacoes': self.observacoes
         }
-    
+
     @property
     def status(self):
         """Retorna o status da entrega"""
@@ -153,18 +163,20 @@ class EntregaEPI(db.Model):
 class AlertaEPI(db.Model):
     """Modelo para configuração de alertas"""
     __tablename__ = 'alertas_epi'
-    
+
     id = db.Column(db.Integer, primary_key=True)
-    tipo = db.Column(db.String(50), nullable=False)  # 'validade_ca', 'estoque_minimo'
+    # 'validade_ca', 'estoque_minimo'
+    tipo = db.Column(db.String(50), nullable=False)
     dias_antecedencia = db.Column(db.Integer)  # Para alertas de validade
     ativo = db.Column(db.Boolean, default=True)
     emails_destino = db.Column(db.Text)  # JSON com lista de emails
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
-    data_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+    data_atualizacao = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
     def __repr__(self):
         return f'<AlertaEPI {self.tipo}>'
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -178,7 +190,7 @@ class AlertaEPI(db.Model):
 class LogValidacaoCA(db.Model):
     """Modelo para log de validações de CA via API"""
     __tablename__ = 'log_validacao_ca'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     epi_id = db.Column(db.Integer, ForeignKey('epis.id'), nullable=False)
     codigo_ca = db.Column(db.String(20), nullable=False)
@@ -189,13 +201,13 @@ class LogValidacaoCA(db.Model):
     resposta_api = db.Column(db.Text)  # JSON da resposta da API
     sucesso = db.Column(db.Boolean, default=False)
     data_validacao = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relacionamento
     epi = relationship("EPI")
-    
+
     def __repr__(self):
         return f'<LogValidacaoCA CA:{self.codigo_ca} Data:{self.data_validacao}>'
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -207,4 +219,80 @@ class LogValidacaoCA(db.Model):
             'data_validade_atual': self.data_validade_atual.isoformat() if self.data_validade_atual else None,
             'sucesso': self.sucesso,
             'data_validacao': self.data_validacao.isoformat() if self.data_validacao else None
+        }
+
+
+class ConfiguracaoEPI(db.Model):
+    """Modelo para configurações do sistema de EPIs"""
+    __tablename__ = 'configuracao_epi'
+
+    id = db.Column(db.Integer, primary_key=True)
+    chave = db.Column(db.String(100), unique=True, nullable=False)
+    valor = db.Column(db.Text)
+    descricao = db.Column(db.String(255))
+    # string, integer, boolean, float
+    tipo = db.Column(db.String(20), default='string')
+    data_atualizacao = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<ConfiguracaoEPI {self.chave}:{self.valor}>'
+
+    @staticmethod
+    def get_config(chave, default=None):
+        """Recupera uma configuração pelo nome da chave"""
+        config = ConfiguracaoEPI.query.filter_by(chave=chave).first()
+        if config:
+            # Converte o valor baseado no tipo
+            if config.tipo == 'boolean':
+                return config.valor.lower() in ['true', '1', 'yes', 'on']
+            elif config.tipo == 'integer':
+                try:
+                    return int(config.valor)
+                except (ValueError, TypeError):
+                    return default
+            elif config.tipo == 'float':
+                try:
+                    return float(config.valor)
+                except (ValueError, TypeError):
+                    return default
+            else:
+                return config.valor
+        return default
+
+    @staticmethod
+    def set_config(chave, valor, descricao=None, tipo='string'):
+        """Define uma configuração"""
+        config = ConfiguracaoEPI.query.filter_by(chave=chave).first()
+        if config:
+            config.valor = str(valor)
+            config.data_atualizacao = datetime.utcnow()
+            if descricao:
+                config.descricao = descricao
+            if tipo:
+                config.tipo = tipo
+        else:
+            config = ConfiguracaoEPI(
+                chave=chave,
+                valor=str(valor),
+                descricao=descricao,
+                tipo=tipo
+            )
+            db.session.add(config)
+
+        try:
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            return False
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'chave': self.chave,
+            'valor': self.valor,
+            'descricao': self.descricao,
+            'tipo': self.tipo,
+            'data_atualizacao': self.data_atualizacao.isoformat() if self.data_atualizacao else None
         }

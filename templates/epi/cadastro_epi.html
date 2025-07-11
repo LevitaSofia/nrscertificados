@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,7 +33,7 @@
         .card {
             border: none;
             border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .page-header {
@@ -50,9 +51,20 @@
             font-weight: 500;
         }
 
-        .status-valido { background-color: #d4edda; color: #155724; }
-        .status-vencendo { background-color: #fff3cd; color: #856404; }
-        .status-vencido { background-color: #f8d7da; color: #721c24; }
+        .status-valido {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-vencendo {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-vencido {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
 
         .epi-image {
             width: 50px;
@@ -69,11 +81,12 @@
             background: white;
             padding: 1.5rem;
             border-radius: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             margin-bottom: 2rem;
         }
     </style>
 </head>
+
 <body>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
@@ -111,15 +124,16 @@
     <div class="container">
         <!-- Alerts -->
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
+            role="alert">
+            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
         {% endwith %}
 
         <!-- Filtros e Busca -->
@@ -134,7 +148,7 @@
                     <select class="form-select" id="filtro-tipo">
                         <option value="">Todos os tipos</option>
                         {% for tipo in tipos_protecao %}
-                            <option value="{{ tipo }}">{{ tipo }}</option>
+                        <option value="{{ tipo }}">{{ tipo }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -190,17 +204,18 @@
                             <tr data-epi-id="{{ epi.id }}">
                                 <td>
                                     {% if epi.imagem_url %}
-                                        <img src="{{ epi.imagem_url }}" alt="{{ epi.nome }}" class="epi-image">
+                                    <img src="{{ epi.imagem_url }}" alt="{{ epi.nome }}" class="epi-image">
                                     {% else %}
-                                        <div class="epi-image bg-light d-flex align-items-center justify-content-center">
-                                            <i class="fas fa-image text-muted"></i>
-                                        </div>
+                                    <div class="epi-image bg-light d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
                                     {% endif %}
                                 </td>
                                 <td>
                                     <strong>{{ epi.nome }}</strong>
                                     {% if epi.descricao %}
-                                        <br><small class="text-muted">{{ epi.descricao[:50] }}{% if epi.descricao|length > 50 %}...{% endif %}</small>
+                                    <br><small class="text-muted">{{ epi.descricao[:50] }}{% if epi.descricao|length >
+                                        50 %}...{% endif %}</small>
                                     {% endif %}
                                 </td>
                                 <td>
@@ -209,27 +224,22 @@
                                 <td>{{ epi.fabricante or '-' }}</td>
                                 <td>
                                     {% if epi.tipo_protecao %}
-                                        <span class="badge bg-info">{{ epi.tipo_protecao }}</span>
+                                    <span class="badge bg-info">{{ epi.tipo_protecao }}</span>
                                     {% else %}
-                                        <span class="text-muted">-</span>
+                                    <span class="text-muted">-</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     {{ epi.data_validade_ca.strftime('%d/%m/%Y') if epi.data_validade_ca }}
                                     <br><small class="text-muted">
                                         {% if epi.dias_para_vencimento is not none %}
-                                            {% if epi.dias_para_vencimento < 0 %}
-                                                Venceu há {{ -epi.dias_para_vencimento }} dias
-                                            {% elif epi.dias_para_vencimento == 0 %}
-                                                Vence hoje
-                                            {% else %}
-                                                {{ epi.dias_para_vencimento }} dias
-                                            {% endif %}
-                                        {% endif %}
-                                    </small>
+                                        {% if epi.dias_para_vencimento < 0 %} Venceu há {{ -epi.dias_para_vencimento }}
+                                            dias {% elif epi.dias_para_vencimento==0 %} Vence hoje {% else %} {{
+                                            epi.dias_para_vencimento }} dias {% endif %} {% endif %} </small>
                                 </td>
                                 <td>
-                                    <span class="fw-bold {% if epi.estoque_atual <= epi.estoque_minimo %}text-danger{% endif %}">
+                                    <span
+                                        class="fw-bold {% if epi.estoque_atual <= epi.estoque_minimo %}text-danger{% endif %}">
                                         {{ epi.estoque_atual }}
                                     </span>
                                     <br><small class="text-muted">Min: {{ epi.estoque_minimo }}</small>
@@ -238,36 +248,32 @@
                                     {% set status = epi.status_validade %}
                                     <span class="status-badge status-{{ status }}">
                                         {% if status == 'valido' %}
-                                            <i class="fas fa-check-circle me-1"></i>Válido
+                                        <i class="fas fa-check-circle me-1"></i>Válido
                                         {% elif status == 'vence_em_30_dias' %}
-                                            <i class="fas fa-exclamation-triangle me-1"></i>Vencendo
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Vencendo
                                         {% elif status == 'vencido' %}
-                                            <i class="fas fa-times-circle me-1"></i>Vencido
+                                        <i class="fas fa-times-circle me-1"></i>Vencido
                                         {% else %}
-                                            <i class="fas fa-question-circle me-1"></i>Indefinido
+                                        <i class="fas fa-question-circle me-1"></i>Indefinido
                                         {% endif %}
                                     </span>
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <button type="button" class="btn btn-outline-info" 
-                                                onclick="visualizarEPI({{ epi.id }})" 
-                                                title="Visualizar">
+                                        <button type="button" class="btn btn-outline-info"
+                                            onclick="visualizarEPI({{ epi.id }})" title="Visualizar">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <a href="{{ url_for('epi.editar_epi', epi_id=epi.id) }}" 
-                                           class="btn btn-outline-warning" 
-                                           title="Editar">
+                                        <a href="{{ url_for('epi.editar_epi', epi_id=epi.id) }}"
+                                            class="btn btn-outline-warning" title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <button type="button" class="btn btn-outline-success" 
-                                                onclick="validarCA('{{ epi.codigo_ca }}')" 
-                                                title="Validar CA">
+                                        <button type="button" class="btn btn-outline-success"
+                                            onclick="validarCA('{{ epi.codigo_ca }}')" title="Validar CA">
                                             <i class="fas fa-check"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-danger" 
-                                                onclick="excluirEPI({{ epi.id }})" 
-                                                title="Excluir">
+                                        <button type="button" class="btn btn-outline-danger"
+                                            onclick="excluirEPI({{ epi.id }})" title="Excluir">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -327,7 +333,7 @@
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             // Inicializar DataTable
             $('#tabela-epis').DataTable({
                 language: {
@@ -349,10 +355,10 @@
 
             // Implementar filtros personalizados
             const table = $('#tabela-epis').DataTable();
-            
+
             // Filtro de busca global
             table.search(busca).draw();
-            
+
             // Filtros específicos seriam implementados aqui
             // Por simplicidade, usando apenas o filtro de busca global
         }
@@ -366,14 +372,14 @@
                         alert('Erro ao carregar dados do EPI');
                         return;
                     }
-                    
+
                     document.getElementById('modal-visualizacao-body').innerHTML = `
                         <div class="row">
                             <div class="col-md-4">
-                                ${data.imagem_url ? 
-                                    `<img src="${data.imagem_url}" class="img-fluid rounded" alt="${data.nome}">` :
-                                    '<div class="bg-light rounded p-4 text-center"><i class="fas fa-image fa-3x text-muted"></i></div>'
-                                }
+                                ${data.imagem_url ?
+                            `<img src="${data.imagem_url}" class="img-fluid rounded" alt="${data.nome}">` :
+                            '<div class="bg-light rounded p-4 text-center"><i class="fas fa-image fa-3x text-muted"></i></div>'
+                        }
                             </div>
                             <div class="col-md-8">
                                 <h6><strong>${data.nome}</strong></h6>
@@ -408,7 +414,7 @@
                             </div>
                         </div>
                     `;
-                    
+
                     new bootstrap.Modal(document.getElementById('modalVisualizacao')).show();
                 })
                 .catch(error => {
@@ -424,15 +430,15 @@
                     <p>Validando CA ${codigoCA}...</p>
                 </div>
             `;
-            
+
             new bootstrap.Modal(document.getElementById('modalValidacaoCA')).show();
-            
+
             // Fazer requisição de validação
             fetch(`/epi/api/validar-ca/${codigoCA}`)
                 .then(response => response.json())
                 .then(data => {
                     let resultadoHTML = '';
-                    
+
                     if (data.valido) {
                         resultadoHTML = `
                             <div class="alert alert-success">
@@ -455,7 +461,7 @@
                             </div>
                         `;
                     }
-                    
+
                     document.getElementById('modal-validacao-body').innerHTML = resultadoHTML;
                 })
                 .catch(error => {
@@ -478,19 +484,20 @@
                         'Content-Type': 'application/json',
                     }
                 })
-                .then(response => {
-                    if (response.ok) {
-                        location.reload(); // Recarregar a página
-                    } else {
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload(); // Recarregar a página
+                        } else {
+                            alert('Erro ao excluir EPI');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
                         alert('Erro ao excluir EPI');
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro:', error);
-                    alert('Erro ao excluir EPI');
-                });
+                    });
             }
         }
     </script>
 </body>
+
 </html>
