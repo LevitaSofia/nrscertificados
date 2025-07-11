@@ -11,3 +11,13 @@ openpyxl==3.1.2
 reportlab==4.4.2
 pillow==11.2.1
 comtypes==1.2.0
+
+# Dependências adicionais para o módulo de Gestão de EPIs
+requests==2.31.0
+schedule==1.2.0
+python-dateutil==2.8.2
+xlsxwriter==3.1.9
+qrcode==7.4.2
+flask-mail==0.9.1
+flask-migrate==4.0.5
+bcrypt==4.0.1

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Entregas - Sistema de EPIs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #cc0000;
+            --secondary-color: #990000;
+        }
+
+        .navbar {
+            background-color: var(--primary-color) !important;
+        }
+
+        .btn-custom {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-custom:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 25px 25px;
+        }
+
+        .funcionario-card {
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .funcionario-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        .status-badge {
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-assinado { background-color: #d4edda; color: #155724; }
+        .status-pendente { background-color: #fff3cd; color: #856404; }
+
+        .epi-list-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .search-funcionario {
+            position: relative;
+        }
+
+        .dropdown-funcionarios {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .funcionario-option {
+            padding: 0.75rem;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .funcionario-option:hover {
+            background-color: #f8f9fa;
+        }
+
+        .funcionario-option:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('epi.index') }}">
+                <i class="fas fa-hard-hat me-2"></i>Sistema de Gestão de EPIs
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('epi.index') }}">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar ao Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-0">
+                        <i class="fas fa-exchange-alt me-3"></i>Gestão de Entregas de EPIs
+                    </h1>
+                    <p class="mb-0 mt-2">Controle entregas e devoluções de Equipamentos de Proteção Individual</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-light btn-lg" onclick="abrirNovaEntrega()">
+                        <i class="fas fa-plus me-2"></i>Nova Entrega
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Alerts -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Buscar Funcionário -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">
+                            <i class="fas fa-search me-2"></i>Buscar Funcionário
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="search-funcionario">
+                            <input type="text" class="form-control" id="busca-funcionario" 
+                                   placeholder="Digite o nome ou CPF do funcionário...">
+                            <div class="dropdown-funcionarios" id="dropdown-funcionarios">
+                                <!-- Opções serão carregadas via JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar me-2"></i>Ações Rápidas
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-custom" onclick="abrirNovaEntrega()">
+                                <i class="fas fa-handshake me-2"></i>Nova Entrega de EPIs
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="gerarRelatorioMensal()">
+                                <i class="fas fa-file-pdf me-2"></i>Relatório Mensal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Declarações Recentes -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-transparent">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-clock me-2"></i>Declarações Recentes
+                                </h5>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-outline-primary btn-sm" onclick="atualizarTabela()">
+                                    <i class="fas fa-sync-alt me-1"></i>Atualizar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="tabela-declaracoes">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Funcionário</th>
+                                        <th>Cargo</th>
+                                        <th>EPIs Entregues</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for declaracao in declaracoes_recentes %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ declaracao.data_declaracao.strftime('%d/%m/%Y') }}</strong>
+                                            <br><small class="text-muted">
+                                                {{ declaracao.data_cadastro.strftime('%H:%M') if declaracao.data_cadastro }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <strong>Nome do Funcionário</strong>
+                                            <br><small class="text-muted">CPF: XXX.XXX.XXX-XX</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">Cargo do Funcionário</span>
+                                        </td>
+                                        <td>
+                                            <div class="epi-summary">
+                                                {% set entregas = declaracao.entregas %}
+                                                {% if entregas %}
+                                                    {% for entrega in entregas[:3] %}
+                                                        <div class="epi-list-item">
+                                                            <small>
+                                                                <i class="fas fa-box me-1"></i>
+                                                                {{ entrega.epi.nome }}
+                                                                <span class="text-muted">(CA: {{ entrega.epi.codigo_ca }})</span>
+                                                            </small>
+                                                        </div>
+                                                    {% endfor %}
+                                                    {% if entregas|length > 3 %}
+                                                        <small class="text-muted">
+                                                            + {{ entregas|length - 3 }} outros EPIs
+                                                        </small>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="text-muted">Nenhum EPI</span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge status-{{ 'assinado' if declaracao.assinado else 'pendente' }}">
+                                                <i class="fas fa-{{ 'check-circle' if declaracao.assinado else 'clock' }} me-1"></i>
+                                                {{ 'Assinado' if declaracao.assinado else 'Pendente' }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-outline-info" 
+                                                        onclick="visualizarDeclaracao({{ declaracao.id }})" 
+                                                        title="Visualizar">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-success" 
+                                                        onclick="gerarPDF({{ declaracao.id }})" 
+                                                        title="Gerar PDF">
+                                                    <i class="fas fa-file-pdf"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary" 
+                                                        onclick="editarDeclaracao({{ declaracao.id }})" 
+                                                        title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-warning" 
+                                                        onclick="historicoFuncionario({{ declaracao.funcionario_id }})" 
+                                                        title="Histórico">
+                                                    <i class="fas fa-history"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Nova Entrega -->
+    <div class="modal fade" id="modalNovaEntrega" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus me-2"></i>Nova Entrega de EPIs
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="form-nova-entrega">
+                        <!-- Seleção de Funcionário -->
+                        <div class="row mb-4">
+                            <div class="col-md-8">
+                                <label for="funcionario-selecionado" class="form-label">
+                                    Funcionário <span class="text-danger">*</span>
+                                </label>
+                                <div class="search-funcionario">
+                                    <input type="text" class="form-control" id="funcionario-selecionado" 
+                                           placeholder="Digite o nome ou CPF do funcionário..." required>
+                                    <input type="hidden" id="funcionario-id">
+                                    <div class="dropdown-funcionarios" id="dropdown-funcionarios-modal">
+                                        <!-- Opções serão carregadas via JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="data-entrega" class="form-label">
+                                    Data da Entrega <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" class="form-control" id="data-entrega" required>
+                            </div>
+                        </div>
+
+                        <!-- Dados do Funcionário Selecionado -->
+                        <div id="dados-funcionario" style="display: none;">
+                            <div class="card bg-light mb-4">
+                                <div class="card-body">
+                                    <h6>Dados do Funcionário:</h6>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <strong>Nome:</strong> <span id="funcionario-nome">-</span>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <strong>CPF:</strong> <span id="funcionario-cpf">-</span>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <strong>Cargo:</strong> <span id="funcionario-cargo">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- EPIs Atuais do Funcionário -->
+                        <div id="epis-atuais" style="display: none;">
+                            <h6>EPIs Atualmente em Posse:</h6>
+                            <div id="lista-epis-atuais" class="mb-4">
+                                <!-- EPIs atuais serão carregados via JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Seleção de Novos EPIs -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h6>Selecionar EPIs para Entrega:</h6>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <input type="text" class="form-control" id="busca-epi" 
+                                               placeholder="Buscar EPI por nome ou CA...">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select class="form-select" id="filtro-tipo-epi">
+                                            <option value="">Todos os tipos</option>
+                                            <option value="Proteção Visual">Proteção Visual</option>
+                                            <option value="Proteção Auditiva">Proteção Auditiva</option>
+                                            <option value="Proteção Respiratória">Proteção Respiratória</option>
+                                            <option value="Proteção das Mãos">Proteção das Mãos</option>
+                                            <option value="Proteção dos Pés">Proteção dos Pés</option>
+                                            <option value="Proteção da Cabeça">Proteção da Cabeça</option>
+                                            <option value="Proteção do Corpo">Proteção do Corpo</option>
+                                            <option value="Proteção contra Quedas">Proteção contra Quedas</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-outline-primary w-100" onclick="carregarEPIs()">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="lista-epis-disponiveis" class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+                                    <!-- EPIs disponíveis serão carregados via JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- EPIs Selecionados -->
+                        <div id="epis-selecionados" style="display: none;">
+                            <h6>EPIs Selecionados para Entrega:</h6>
+                            <div id="lista-epis-selecionados" class="mb-3">
+                                <!-- EPIs selecionados aparecerão aqui -->
+                            </div>
+                        </div>
+
+                        <!-- Observações -->
+                        <div class="row">
+                            <div class="col-12">
+                                <label for="observacoes" class="form-label">Observações</label>
+                                <textarea class="form-control" id="observacoes" rows="3" 
+                                         placeholder="Observações sobre a entrega..."></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-custom" onclick="salvarEntrega()">
+                        <i class="fas fa-save me-2"></i>Salvar Entrega
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        let funcionariosSelecionados = [];
+        let episSelecionados = [];
+
+        $(document).ready(function() {
+            // Inicializar DataTable
+            $('#tabela-declaracoes').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/pt-BR.json'
+                },
+                responsive: true,
+                pageLength: 15,
+                order: [[0, 'desc']] // Ordenar por data (mais recente primeiro)
+            });
+
+            // Configurar data padrão para hoje
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('data-entrega').value = hoje;
+
+            // Configurar busca de funcionários
+            configurarBuscaFuncionarios();
+        });
+
+        function configurarBuscaFuncionarios() {
+            const inputs = ['busca-funcionario', 'funcionario-selecionado'];
+            
+            inputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                const dropdown = document.getElementById(
+                    inputId === 'busca-funcionario' ? 'dropdown-funcionarios' : 'dropdown-funcionarios-modal'
+                );
+
+                input.addEventListener('input', function() {
+                    const termo = this.value.trim();
+                    if (termo.length >= 2) {
+                        buscarFuncionarios(termo, dropdown, inputId);
+                    } else {
+                        dropdown.style.display = 'none';
+                    }
+                });
+
+                // Fechar dropdown ao clicar fora
+                document.addEventListener('click', function(e) {
+                    if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                        dropdown.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        function buscarFuncionarios(termo, dropdown, inputId) {
+            // Simulação de busca de funcionários
+            // Em produção, faria uma chamada AJAX para a API
+            const funcionarios = [
+                { id: 1, nome: 'João Silva Santos', cpf: '123.456.789-01', cargo: 'Instalador de Telas' },
+                { id: 2, nome: 'Maria Oliveira Costa', cpf: '987.654.321-09', cargo: 'Ajudante de Instalador' },
+                { id: 3, nome: 'Pedro Souza Lima', cpf: '456.789.123-45', cargo: 'Supervisor de Instalação' },
+                { id: 4, nome: 'Ana Santos Ferreira', cpf: '789.123.456-78', cargo: 'Auxiliar Administrativo' }
+            ];
+
+            const resultados = funcionarios.filter(f => 
+                f.nome.toLowerCase().includes(termo.toLowerCase()) ||
+                f.cpf.includes(termo)
+            );
+
+            if (resultados.length > 0) {
+                dropdown.innerHTML = resultados.map(f => `
+                    <div class="funcionario-option" onclick="selecionarFuncionario(${f.id}, '${f.nome}', '${f.cpf}', '${f.cargo}', '${inputId}')">
+                        <strong>${f.nome}</strong><br>
+                        <small class="text-muted">CPF: ${f.cpf} | Cargo: ${f.cargo}</small>
+                    </div>
+                `).join('');
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.innerHTML = '<div class="funcionario-option">Nenhum funcionário encontrado</div>';
+                dropdown.style.display = 'block';
+            }
+        }
+
+        function selecionarFuncionario(id, nome, cpf, cargo, inputId) {
+            const input = document.getElementById(inputId);
+            input.value = nome;
+            
+            // Fechar dropdown
+            const dropdown = document.getElementById(
+                inputId === 'busca-funcionario' ? 'dropdown-funcionarios' : 'dropdown-funcionarios-modal'
+            );
+            dropdown.style.display = 'none';
+
+            if (inputId === 'funcionario-selecionado') {
+                // Preencher dados do funcionário no modal
+                document.getElementById('funcionario-id').value = id;
+                document.getElementById('funcionario-nome').textContent = nome;
+                document.getElementById('funcionario-cpf').textContent = cpf;
+                document.getElementById('funcionario-cargo').textContent = cargo;
+                
+                // Mostrar dados do funcionário
+                document.getElementById('dados-funcionario').style.display = 'block';
+                
+                // Carregar EPIs atuais do funcionário
+                carregarEPIsAtuais(id);
+                
+                // Carregar EPIs disponíveis
+                carregarEPIs();
+            } else {
+                // Navegar para nova entrega
+                window.location.href = `/epi/entregas/nova/${id}`;
+            }
+        }
+
+        function carregarEPIsAtuais(funcionarioId) {
+            // Simulação de EPIs atuais do funcionário
+            const episAtuais = [
+                { nome: 'Capacete de Segurança Branco', ca: '12345', dataEntrega: '15/06/2025' },
+                { nome: 'Óculos de Proteção Incolor', ca: '67890', dataEntrega: '15/06/2025' }
+            ];
+
+            if (episAtuais.length > 0) {
+                const lista = document.getElementById('lista-epis-atuais');
+                lista.innerHTML = episAtuais.map(epi => `
+                    <div class="epi-list-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${epi.nome}</strong>
+                                <br><small class="text-muted">CA: ${epi.ca} | Entregue em: ${epi.dataEntrega}</small>
+                            </div>
+                            <button type="button" class="btn btn-outline-warning btn-sm" 
+                                    onclick="marcarDevolucao('${epi.ca}')">
+                                <i class="fas fa-undo me-1"></i>Devolver
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('epis-atuais').style.display = 'block';
+            }
+        }
+
+        function carregarEPIs() {
+            // Simulação de EPIs disponíveis
+            const epis = [
+                { id: 1, nome: 'Luva de Segurança', ca: '11111', estoque: 15, tipo: 'Proteção das Mãos' },
+                { id: 2, nome: 'Botina de Segurança', ca: '22222', estoque: 8, tipo: 'Proteção dos Pés' },
+                { id: 3, nome: 'Protetor Auricular', ca: '33333', estoque: 25, tipo: 'Proteção Auditiva' },
+                { id: 4, nome: 'Cinto de Segurança', ca: '44444', estoque: 5, tipo: 'Proteção contra Quedas' }
+            ];
+
+            const lista = document.getElementById('lista-epis-disponiveis');
+            lista.innerHTML = epis.map(epi => `
+                <div class="form-check mb-2 p-3 border rounded">
+                    <input class="form-check-input" type="checkbox" id="epi-${epi.id}" 
+                           onchange="toggleEPI(${epi.id}, '${epi.nome}', '${epi.ca}', ${epi.estoque})">
+                    <label class="form-check-label w-100" for="epi-${epi.id}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${epi.nome}</strong>
+                                <br><small class="text-muted">CA: ${epi.ca} | Tipo: ${epi.tipo}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge ${epi.estoque > 10 ? 'bg-success' : epi.estoque > 5 ? 'bg-warning' : 'bg-danger'}">
+                                    Estoque: ${epi.estoque}
+                                </span>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            `).join('');
+        }
+
+        function toggleEPI(id, nome, ca, estoque) {
+            const checkbox = document.getElementById(`epi-${id}`);
+            
+            if (checkbox.checked) {
+                episSelecionados.push({ id, nome, ca, estoque, quantidade: 1 });
+            } else {
+                episSelecionados = episSelecionados.filter(epi => epi.id !== id);
+            }
+            
+            atualizarEPIsSelecionados();
+        }
+
+        function atualizarEPIsSelecionados() {
+            const container = document.getElementById('epis-selecionados');
+            const lista = document.getElementById('lista-epis-selecionados');
+            
+            if (episSelecionados.length > 0) {
+                lista.innerHTML = episSelecionados.map(epi => `
+                    <div class="epi-list-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${epi.nome}</strong>
+                                <br><small class="text-muted">CA: ${epi.ca}</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <label class="me-2">Qtd:</label>
+                                <input type="number" class="form-control form-control-sm me-2" 
+                                       style="width: 80px;" min="1" max="${epi.estoque}" 
+                                       value="${epi.quantidade}" 
+                                       onchange="atualizarQuantidade(${epi.id}, this.value)">
+                                <button type="button" class="btn btn-outline-danger btn-sm" 
+                                        onclick="removerEPI(${epi.id})">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        function atualizarQuantidade(id, novaQuantidade) {
+            const epi = episSelecionados.find(e => e.id === id);
+            if (epi) {
+                epi.quantidade = parseInt(novaQuantidade);
+            }
+        }
+
+        function removerEPI(id) {
+            episSelecionados = episSelecionados.filter(epi => epi.id !== id);
+            document.getElementById(`epi-${id}`).checked = false;
+            atualizarEPIsSelecionados();
+        }
+
+        function abrirNovaEntrega() {
+            // Limpar formulário
+            episSelecionados = [];
+            document.getElementById('form-nova-entrega').reset();
+            document.getElementById('dados-funcionario').style.display = 'none';
+            document.getElementById('epis-atuais').style.display = 'none';
+            document.getElementById('epis-selecionados').style.display = 'none';
+            
+            // Configurar data padrão
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('data-entrega').value = hoje;
+            
+            // Abrir modal
+            new bootstrap.Modal(document.getElementById('modalNovaEntrega')).show();
+        }
+
+        function salvarEntrega() {
+            const funcionarioId = document.getElementById('funcionario-id').value;
+            const dataEntrega = document.getElementById('data-entrega').value;
+            const observacoes = document.getElementById('observacoes').value;
+
+            if (!funcionarioId) {
+                alert('Por favor, selecione um funcionário');
+                return;
+            }
+
+            if (episSelecionados.length === 0) {
+                alert('Por favor, selecione pelo menos um EPI');
+                return;
+            }
+
+            // Preparar dados para envio
+            const dadosEntrega = {
+                funcionario_id: funcionarioId,
+                data_declaracao: dataEntrega,
+                observacoes: observacoes,
+                epis: episSelecionados.map(epi => ({
+                    acao: 'entregar',
+                    epi_id: epi.id,
+                    quantidade: epi.quantidade,
+                    observacoes: ''
+                }))
+            };
+
+            // Simular salvamento
+            console.log('Dados da entrega:', dadosEntrega);
+            
+            // Em produção, faria uma chamada AJAX
+            alert('Entrega salva com sucesso!');
+            
+            // Fechar modal e recarregar página
+            bootstrap.Modal.getInstance(document.getElementById('modalNovaEntrega')).hide();
+            setTimeout(() => location.reload(), 500);
+        }
+
+        // Funções auxiliares
+        function visualizarDeclaracao(id) {
+            alert(`Visualizar declaração ${id}`);
+        }
+
+        function gerarPDF(id) {
+            window.open(`/epi/entregas/pdf/${id}`, '_blank');
+        }
+
+        function editarDeclaracao(id) {
+            alert(`Editar declaração ${id}`);
+        }
+
+        function historicoFuncionario(funcionarioId) {
+            window.location.href = `/epi/entregas/historico/${funcionarioId}`;
+        }
+
+        function atualizarTabela() {
+            location.reload();
+        }
+
+        function gerarRelatorioMensal() {
+            alert('Gerar relatório mensal');
+        }
+
+        function marcarDevolucao(ca) {
+            if (confirm(`Confirmar devolução do EPI CA: ${ca}?`)) {
+                alert('EPI marcado para devolução');
+            }
+        }
+    </script>
+</body>
+</html>

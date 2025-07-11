@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico do EPI - Sistema de Gestão</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        .info-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .epi-image {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+        .status-badge {
+            font-size: 0.9em;
+            padding: 0.5em 1em;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #dee2e6;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -37px;
+            top: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #007bff;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px #007bff;
+        }
+        .timeline-item.entrega::before {
+            background: #28a745;
+            box-shadow: 0 0 0 2px #28a745;
+        }
+        .timeline-item.devolucao::before {
+            background: #ffc107;
+            box-shadow: 0 0 0 2px #ffc107;
+        }
+        .timeline-item.validacao::before {
+            background: #17a2b8;
+            box-shadow: 0 0 0 2px #17a2b8;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-card.success {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+        }
+        .stat-card.warning {
+            background: linear-gradient(135deg, #ffc107, #d39e00);
+        }
+        .stat-card.danger {
+            background: linear-gradient(135deg, #dc3545, #bd2130);
+        }
+        .validation-history {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-hard-hat me-2"></i>Sistema de Gestão
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('epi.cadastro') }}">
+                    <i class="fas fa-list me-1"></i>Lista EPIs
+                </a>
+                <a class="nav-link" href="{{ url_for('epi.editar', id=epi.id) }}">
+                    <i class="fas fa-edit me-1"></i>Editar
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <div class="row">
+            <!-- Informações do EPI -->
+            <div class="col-md-4">
+                <div class="info-card">
+                    <div class="text-center mb-3">
+                        {% if epi.imagem %}
+                            <img src="{{ url_for('static', filename='epi_images/' + epi.imagem) }}" 
+                                 alt="{{ epi.nome }}" class="epi-image">
+                        {% else %}
+                            <div class="epi-image mx-auto d-flex align-items-center justify-content-center bg-light">
+                                <i class="fas fa-image fa-3x text-muted"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <h4 class="text-center mb-3">{{ epi.nome }}</h4>
+                    
+                    <div class="mb-3">
+                        <strong>CA:</strong> {{ epi.ca }}<br>
+                        <strong>Categoria:</strong> {{ epi.categoria }}<br>
+                        <strong>Fabricante:</strong> {{ epi.fabricante or 'N/A' }}<br>
+                        <strong>Modelo:</strong> {{ epi.modelo or 'N/A' }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Status:</strong>
+                        {% if epi.status == 'ativo' %}
+                            <span class="badge bg-success status-badge">Ativo</span>
+                        {% elif epi.status == 'inativo' %}
+                            <span class="badge bg-secondary status-badge">Inativo</span>
+                        {% else %}
+                            <span class="badge bg-danger status-badge">Vencido</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Validade CA:</strong> {{ epi.validade_ca.strftime('%d/%m/%Y') if epi.validade_ca else 'N/A' }}<br>
+                        {% set status_validade = epi.status_validade %}
+                        {% if status_validade == 'valido' %}
+                            <span class="badge bg-success">Válido</span>
+                        {% elif status_validade == 'vencendo' %}
+                            <span class="badge bg-warning">Vencendo</span>
+                        {% else %}
+                            <span class="badge bg-danger">Vencido</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Estoque:</strong> {{ epi.estoque_atual }} / {{ epi.estoque_minimo }} (mín.)<br>
+                        {% set status_estoque = epi.status_estoque %}
+                        {% if status_estoque == 'ok' %}
+                            <span class="badge bg-success">OK</span>
+                        {% elif status_estoque == 'baixo' %}
+                            <span class="badge bg-warning">Baixo</span>
+                        {% else %}
+                            <span class="badge bg-danger">Sem Estoque</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if epi.observacoes %}
+                    <div class="mb-3">
+                        <strong>Observações:</strong><br>
+                        <small class="text-muted">{{ epi.observacoes }}</small>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="text-center">
+                        <a href="{{ url_for('epi.editar', id=epi.id) }}" class="btn btn-primary btn-sm me-2">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <a href="{{ url_for('epi.gestao_entregas') }}?epi_id={{ epi.id }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-hand-holding"></i> Entregar
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Ações Rápidas -->
+                <div class="info-card">
+                    <h6 class="border-bottom pb-2 mb-3">
+                        <i class="fas fa-bolt text-warning me-2"></i>Ações Rápidas
+                    </h6>
+                    
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="validarCA()">
+                            <i class="fas fa-check-circle me-2"></i>Validar CA Online
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="exportarHistorico()">
+                            <i class="fas fa-download me-2"></i>Exportar Histórico
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="gerarQRCode()">
+                            <i class="fas fa-qrcode me-2"></i>Gerar QR Code
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Histórico e Estatísticas -->
+            <div class="col-md-8">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-history text-primary me-2"></i>Histórico do EPI</h2>
+                    <div>
+                        <button class="btn btn-outline-primary" onclick="atualizarHistorico()">
+                            <i class="fas fa-sync-alt"></i> Atualizar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Estatísticas Rápidas -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-hand-holding fa-2x mb-2"></i>
+                        <h4>{{ estatisticas.total_entregas or 0 }}</h4>
+                        <small>Total de Entregas</small>
+                    </div>
+                    <div class="stat-card success">
+                        <i class="fas fa-undo fa-2x mb-2"></i>
+                        <h4>{{ estatisticas.total_devolucoes or 0 }}</h4>
+                        <small>Devoluções</small>
+                    </div>
+                    <div class="stat-card warning">
+                        <i class="fas fa-clock fa-2x mb-2"></i>
+                        <h4>{{ estatisticas.entregas_pendentes or 0 }}</h4>
+                        <small>Em Uso</small>
+                    </div>
+                    <div class="stat-card danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                        <h4>{{ estatisticas.entregas_atrasadas or 0 }}</h4>
+                        <small>Devoluções Atrasadas</small>
+                    </div>
+                </div>
+
+                <!-- Abas de Histórico -->
+                <ul class="nav nav-tabs" id="historico-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="entregas-tab" data-bs-toggle="tab" 
+                                data-bs-target="#entregas" type="button" role="tab">
+                            <i class="fas fa-hand-holding me-2"></i>Entregas
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="validacoes-tab" data-bs-toggle="tab" 
+                                data-bs-target="#validacoes" type="button" role="tab">
+                            <i class="fas fa-check-circle me-2"></i>Validações CA
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="estoque-tab" data-bs-toggle="tab" 
+                                data-bs-target="#estoque" type="button" role="tab">
+                            <i class="fas fa-boxes me-2"></i>Movimento Estoque
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="historico-tab-content">
+                    <!-- Aba Entregas -->
+                    <div class="tab-pane fade show active" id="entregas" role="tabpanel">
+                        <div class="info-card">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6><i class="fas fa-hand-holding me-2"></i>Histórico de Entregas</h6>
+                                <div>
+                                    <button class="btn btn-outline-success btn-sm" onclick="novaEntrega()">
+                                        <i class="fas fa-plus"></i> Nova Entrega
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="timeline">
+                                {% for entrega in entregas %}
+                                <div class="timeline-item entrega">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                <i class="fas fa-user me-2"></i>{{ entrega.funcionario_nome }}
+                                            </h6>
+                                            <p class="mb-1">
+                                                <strong>Quantidade:</strong> {{ entrega.quantidade }} unidade(s)<br>
+                                                <strong>Data Entrega:</strong> {{ entrega.data_entrega.strftime('%d/%m/%Y') }}<br>
+                                                {% if entrega.data_devolucao_prevista %}
+                                                <strong>Devolução Prevista:</strong> {{ entrega.data_devolucao_prevista.strftime('%d/%m/%Y') }}<br>
+                                                {% endif %}
+                                                {% if entrega.data_devolucao_real %}
+                                                <strong>Devolvido em:</strong> {{ entrega.data_devolucao_real.strftime('%d/%m/%Y') }}
+                                                {% endif %}
+                                            </p>
+                                            {% if entrega.observacoes %}
+                                            <small class="text-muted">{{ entrega.observacoes }}</small>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            {% if entrega.status == 'entregue' %}
+                                                <span class="badge bg-success">Entregue</span>
+                                            {% elif entrega.status == 'devolvido' %}
+                                                <span class="badge bg-secondary">Devolvido</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">{{ entrega.status|title }}</span>
+                                            {% endif %}
+                                            
+                                            {% if entrega.status == 'entregue' %}
+                                            <div class="mt-2">
+                                                <button class="btn btn-outline-warning btn-sm" 
+                                                        onclick="registrarDevolucao('{{ entrega.id }}')">
+                                                    <i class="fas fa-undo"></i> Devolução
+                                                </button>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    {% if entrega.numero_declaracao %}
+                                    <div class="mt-2">
+                                        <a href="{{ url_for('epi.download_declaracao', numero=entrega.numero_declaracao) }}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-file-pdf me-1"></i>Declaração PDF
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Nenhuma entrega registrada para este EPI.</p>
+                                    <button class="btn btn-primary" onclick="novaEntrega()">
+                                        <i class="fas fa-plus me-2"></i>Registrar Primeira Entrega
+                                    </button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aba Validações CA -->
+                    <div class="tab-pane fade" id="validacoes" role="tabpanel">
+                        <div class="info-card">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6><i class="fas fa-check-circle me-2"></i>Histórico de Validações do CA</h6>
+                                <button class="btn btn-outline-info btn-sm" onclick="validarCA()">
+                                    <i class="fas fa-sync-alt"></i> Nova Validação
+                                </button>
+                            </div>
+
+                            <div class="validation-history">
+                                {% for log in logs_validacao %}
+                                <div class="timeline-item validacao">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                Validação {{ log.data_validacao.strftime('%d/%m/%Y %H:%M') }}
+                                            </h6>
+                                            <p class="mb-1">
+                                                <strong>Status:</strong> 
+                                                {% if log.status_validacao == 'valido' %}
+                                                    <span class="badge bg-success">Válido</span>
+                                                {% elif log.status_validacao == 'invalido' %}
+                                                    <span class="badge bg-danger">Inválido</span>
+                                                {% elif log.status_validacao == 'vencido' %}
+                                                    <span class="badge bg-warning">Vencido</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ log.status_validacao|title }}</span>
+                                                {% endif %}
+                                            </p>
+                                            
+                                            {% if log.fabricante_api %}
+                                            <p class="mb-1">
+                                                <strong>Fabricante:</strong> {{ log.fabricante_api }}<br>
+                                                {% if log.produto_api %}
+                                                <strong>Produto:</strong> {{ log.produto_api }}<br>
+                                                {% endif %}
+                                                {% if log.validade_api %}
+                                                <strong>Validade API:</strong> {{ log.validade_api.strftime('%d/%m/%Y') }}
+                                                {% endif %}
+                                            </p>
+                                            {% endif %}
+                                            
+                                            {% if log.validado_por %}
+                                            <small class="text-muted">Por: {{ log.validado_por }}</small>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-outline-info btn-sm" 
+                                                    onclick="verDetalhesValidacao('{{ log.id }}')">
+                                                <i class="fas fa-eye"></i> Detalhes
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-shield-alt fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Nenhuma validação de CA registrada.</p>
+                                    <button class="btn btn-info" onclick="validarCA()">
+                                        <i class="fas fa-check-circle me-2"></i>Validar CA Agora
+                                    </button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aba Movimento de Estoque -->
+                    <div class="tab-pane fade" id="estoque" role="tabpanel">
+                        <div class="info-card">
+                            <h6 class="mb-3"><i class="fas fa-boxes me-2"></i>Movimento de Estoque</h6>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="bg-light p-3 rounded">
+                                        <h6 class="text-primary">Estoque Atual</h6>
+                                        <h3>{{ epi.estoque_atual }} <small class="text-muted">unidades</small></h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="bg-light p-3 rounded">
+                                        <h6 class="text-warning">Estoque Mínimo</h6>
+                                        <h3>{{ epi.estoque_minimo }} <small class="text-muted">unidades</small></h3>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="timeline">
+                                {% for movimento in movimentos_estoque %}
+                                <div class="timeline-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                {% if movimento.tipo == 'entrada' %}
+                                                    <i class="fas fa-plus-circle text-success me-2"></i>Entrada
+                                                {% elif movimento.tipo == 'saida' %}
+                                                    <i class="fas fa-minus-circle text-danger me-2"></i>Saída
+                                                {% else %}
+                                                    <i class="fas fa-edit text-info me-2"></i>Ajuste
+                                                {% endif %}
+                                            </h6>
+                                            <p class="mb-1">
+                                                <strong>Quantidade:</strong> 
+                                                {% if movimento.tipo == 'entrada' %}+{% elif movimento.tipo == 'saida' %}-{% endif %}{{ movimento.quantidade }}<br>
+                                                <strong>Data:</strong> {{ movimento.data.strftime('%d/%m/%Y %H:%M') }}<br>
+                                                <strong>Motivo:</strong> {{ movimento.motivo or 'N/A' }}
+                                            </p>
+                                            {% if movimento.observacoes %}
+                                            <small class="text-muted">{{ movimento.observacoes }}</small>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-light text-dark">
+                                                Saldo: {{ movimento.saldo_apos }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-warehouse fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Nenhum movimento de estoque registrado.</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="text-center">
+                                <button class="btn btn-success me-2" onclick="adicionarEstoque()">
+                                    <i class="fas fa-plus"></i> Entrada
+                                </button>
+                                <button class="btn btn-warning me-2" onclick="removerEstoque()">
+                                    <i class="fas fa-minus"></i> Saída
+                                </button>
+                                <button class="btn btn-info" onclick="ajustarEstoque()">
+                                    <i class="fas fa-edit"></i> Ajuste
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para nova entrega -->
+    <div class="modal fade" id="modalNovaEntrega" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-hand-holding me-2"></i>Nova Entrega de EPI
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Conteúdo será carregado via AJAX -->
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        // Função para validar CA
+        function validarCA() {
+            const ca = '{{ epi.ca }}';
+            
+            $.ajax({
+                url: '/epi/api/validar-ca',
+                method: 'POST',
+                data: { 
+                    ca: ca,
+                    epi_id: '{{ epi.id }}'
+                },
+                success: function(response) {
+                    let alertClass = 'info';
+                    if (response.status === 'valido') alertClass = 'success';
+                    else if (response.status === 'invalido') alertClass = 'danger';
+                    else if (response.status === 'vencido') alertClass = 'warning';
+                    
+                    // Mostrar resultado
+                    const alertHtml = `
+                        <div class="alert alert-${alertClass} alert-dismissible fade show" role="alert">
+                            <strong>Validação do CA:</strong> ${response.mensagem}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `;
+                    
+                    $('body').prepend(alertHtml);
+                    
+                    // Atualizar aba de validações
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                },
+                error: function() {
+                    alert('Erro ao validar CA. Tente novamente.');
+                }
+            });
+        }
+
+        // Função para nova entrega
+        function novaEntrega() {
+            $('#modalNovaEntrega .modal-body').load('/epi/gestao-entregas/modal-nova?epi_id={{ epi.id }}');
+            $('#modalNovaEntrega').modal('show');
+        }
+
+        // Função para registrar devolução
+        function registrarDevolucao(entregaId) {
+            if (confirm('Confirma o registro da devolução deste EPI?')) {
+                $.ajax({
+                    url: `/epi/api/devolucao/${entregaId}`,
+                    method: 'POST',
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            alert('Erro ao registrar devolução: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Erro ao registrar devolução. Tente novamente.');
+                    }
+                });
+            }
+        }
+
+        // Função para exportar histórico
+        function exportarHistorico() {
+            window.open(`/epi/api/exportar-historico/{{ epi.id }}`, '_blank');
+        }
+
+        // Função para gerar QR Code
+        function gerarQRCode() {
+            window.open(`/epi/api/qrcode/{{ epi.id }}`, '_blank');
+        }
+
+        // Função para atualizar histórico
+        function atualizarHistorico() {
+            location.reload();
+        }
+
+        // Funções de movimento de estoque
+        function adicionarEstoque() {
+            const quantidade = prompt('Quantidade de entrada:', '1');
+            const motivo = prompt('Motivo da entrada:', 'Compra/Reposição');
+            
+            if (quantidade && motivo) {
+                $.ajax({
+                    url: `/epi/api/estoque/entrada/{{ epi.id }}`,
+                    method: 'POST',
+                    data: {
+                        quantidade: quantidade,
+                        motivo: motivo
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            alert('Erro: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Erro ao registrar entrada de estoque.');
+                    }
+                });
+            }
+        }
+
+        function removerEstoque() {
+            const quantidade = prompt('Quantidade de saída:', '1');
+            const motivo = prompt('Motivo da saída:', 'Entrega para funcionário');
+            
+            if (quantidade && motivo) {
+                $.ajax({
+                    url: `/epi/api/estoque/saida/{{ epi.id }}`,
+                    method: 'POST',
+                    data: {
+                        quantidade: quantidade,
+                        motivo: motivo
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            alert('Erro: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Erro ao registrar saída de estoque.');
+                    }
+                });
+            }
+        }
+
+        function ajustarEstoque() {
+            const novoEstoque = prompt('Novo valor do estoque:', '{{ epi.estoque_atual }}');
+            const motivo = prompt('Motivo do ajuste:', 'Inventário/Correção');
+            
+            if (novoEstoque !== null && motivo) {
+                $.ajax({
+                    url: `/epi/api/estoque/ajuste/{{ epi.id }}`,
+                    method: 'POST',
+                    data: {
+                        novo_estoque: novoEstoque,
+                        motivo: motivo
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            alert('Erro: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Erro ao ajustar estoque.');
+                    }
+                });
+            }
+        }
+
+        function verDetalhesValidacao(logId) {
+            $.ajax({
+                url: `/epi/api/validacao-detalhes/${logId}`,
+                method: 'GET',
+                success: function(response) {
+                    const modalHtml = `
+                        <div class="modal fade" id="modalDetalhesValidacao" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Detalhes da Validação</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <pre>${JSON.stringify(response, null, 2)}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    $('body').append(modalHtml);
+                    $('#modalDetalhesValidacao').modal('show');
+                    
+                    $('#modalDetalhesValidacao').on('hidden.bs.modal', function () {
+                        $(this).remove();
+                    });
+                },
+                error: function() {
+                    alert('Erro ao carregar detalhes da validação.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

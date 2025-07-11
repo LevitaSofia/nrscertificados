@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novo EPI - Sistema de Gestão</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #cc0000;
+            --secondary-color: #990000;
+        }
+
+        .navbar {
+            background-color: var(--primary-color) !important;
+        }
+
+        .btn-custom {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-custom:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 25px 25px;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(204, 0, 0, 0.25);
+        }
+
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(204, 0, 0, 0.25);
+        }
+
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(204, 0, 0, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            background-color: rgba(204, 0, 0, 0.1);
+        }
+
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .validation-message {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('epi.index') }}">
+                <i class="fas fa-hard-hat me-2"></i>Sistema de Gestão de EPIs
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('epi.cadastro_epi') }}">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar à Lista
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-0">
+                        <i class="fas fa-plus-circle me-3"></i>Cadastrar Novo EPI
+                    </h1>
+                    <p class="mb-0 mt-2">Adicione um novo Equipamento de Proteção Individual ao inventário</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <i class="fas fa-box-open" style="font-size: 4rem; opacity: 0.3;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Alerts -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Formulário -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">
+                            <i class="fas fa-edit me-2"></i>Dados do EPI
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ url_for('epi.novo_epi') }}" method="POST" enctype="multipart/form-data" id="form-epi">
+                            <div class="row">
+                                <!-- Nome do EPI -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="nome" class="form-label">
+                                        Nome do EPI <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="nome" name="nome" required
+                                           placeholder="Ex: Capacete de Segurança Branco">
+                                </div>
+
+                                <!-- Código do CA -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="codigo_ca" class="form-label">
+                                        Código do CA <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="codigo_ca" name="codigo_ca" required
+                                               placeholder="Ex: 12345">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="validarCA()">
+                                            <i class="fas fa-search"></i> Validar
+                                        </button>
+                                    </div>
+                                    <div id="resultado-validacao" class="mt-2" style="display: none;"></div>
+                                </div>
+
+                                <!-- Descrição -->
+                                <div class="col-12 mb-3">
+                                    <label for="descricao" class="form-label">Descrição</label>
+                                    <textarea class="form-control" id="descricao" name="descricao" rows="3"
+                                             placeholder="Descreva as características do EPI..."></textarea>
+                                </div>
+
+                                <!-- Fabricante -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="fabricante" class="form-label">Fabricante</label>
+                                    <input type="text" class="form-control" id="fabricante" name="fabricante"
+                                           placeholder="Ex: 3M, MSA, Honeywell">
+                                </div>
+
+                                <!-- Tipo de Proteção -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="tipo_protecao" class="form-label">Tipo de Proteção</label>
+                                    <select class="form-select" id="tipo_protecao" name="tipo_protecao">
+                                        <option value="">Selecione um tipo</option>
+                                        {% for tipo in tipos_protecao %}
+                                            <option value="{{ tipo }}">{{ tipo }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <!-- Data de Validade do CA -->
+                                <div class="col-md-4 mb-3">
+                                    <label for="data_validade_ca" class="form-label">
+                                        Data de Validade do CA <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date" class="form-control" id="data_validade_ca" name="data_validade_ca" required>
+                                </div>
+
+                                <!-- Estoque Atual -->
+                                <div class="col-md-4 mb-3">
+                                    <label for="estoque_atual" class="form-label">Estoque Atual</label>
+                                    <input type="number" class="form-control" id="estoque_atual" name="estoque_atual" 
+                                           min="0" value="0" placeholder="0">
+                                </div>
+
+                                <!-- Estoque Mínimo -->
+                                <div class="col-md-4 mb-3">
+                                    <label for="estoque_minimo" class="form-label">Estoque Mínimo de Alerta</label>
+                                    <input type="number" class="form-control" id="estoque_minimo" name="estoque_minimo" 
+                                           min="0" value="0" placeholder="0">
+                                </div>
+
+                                <!-- Upload de Imagem -->
+                                <div class="col-12 mb-3">
+                                    <label class="form-label">Imagem do EPI</label>
+                                    <div class="upload-area" onclick="document.getElementById('imagem').click()">
+                                        <div id="upload-content">
+                                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                            <p class="text-muted mb-2">Clique aqui ou arraste uma imagem</p>
+                                            <small class="text-muted">Formatos aceitos: JPG, PNG, GIF (máx. 5MB)</small>
+                                        </div>
+                                        <div id="preview-content" style="display: none;">
+                                            <img id="preview-image" class="preview-image" alt="Preview">
+                                            <p class="mt-2 mb-0">
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerImagem()">
+                                                    <i class="fas fa-trash me-1"></i>Remover
+                                                </button>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <input type="file" id="imagem" name="imagem" accept="image/*" style="display: none;" onchange="previewImagem(this)">
+                                </div>
+                            </div>
+
+                            <!-- Botões de Ação -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{{ url_for('epi.cadastro_epi') }}" class="btn btn-outline-secondary">
+                                            <i class="fas fa-times me-2"></i>Cancelar
+                                        </a>
+                                        <div>
+                                            <button type="button" class="btn btn-outline-primary me-2" onclick="limparFormulario()">
+                                                <i class="fas fa-eraser me-2"></i>Limpar
+                                            </button>
+                                            <button type="submit" class="btn btn-custom">
+                                                <i class="fas fa-save me-2"></i>Salvar EPI
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card de Ajuda -->
+        <div class="row justify-content-center mt-4">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-transparent">
+                        <h6 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Informações Importantes
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Código do CA</h6>
+                                <p class="small">O Certificado de Aprovação (CA) é obrigatório para todos os EPIs. Use o botão "Validar" para verificar se o CA está ativo.</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Estoque Mínimo</h6>
+                                <p class="small">Defina a quantidade mínima em estoque. O sistema enviará alertas quando este limite for atingido.</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Tipo de Proteção</h6>
+                                <p class="small">Categorize o EPI por tipo de proteção para facilitar filtros e relatórios.</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Imagem</h6>
+                                <p class="small">Adicione uma imagem para facilitar a identificação visual do EPI pelos funcionários.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Função para preview da imagem
+        function previewImagem(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                
+                // Validar tamanho (5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('A imagem deve ter no máximo 5MB');
+                    input.value = '';
+                    return;
+                }
+
+                // Validar tipo
+                if (!file.type.startsWith('image/')) {
+                    alert('Por favor, selecione apenas arquivos de imagem');
+                    input.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('preview-image').src = e.target.result;
+                    document.getElementById('upload-content').style.display = 'none';
+                    document.getElementById('preview-content').style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Função para remover imagem
+        function removerImagem() {
+            document.getElementById('imagem').value = '';
+            document.getElementById('upload-content').style.display = 'block';
+            document.getElementById('preview-content').style.display = 'none';
+        }
+
+        // Função para validar CA
+        function validarCA() {
+            const codigoCA = document.getElementById('codigo_ca').value;
+            if (!codigoCA) {
+                alert('Por favor, digite um código de CA');
+                return;
+            }
+
+            const resultadoDiv = document.getElementById('resultado-validacao');
+            resultadoDiv.style.display = 'block';
+            resultadoDiv.innerHTML = `
+                <div class="validation-message">
+                    <i class="fas fa-spinner fa-spin me-2"></i>Validando CA ${codigoCA}...
+                </div>
+            `;
+
+            // Fazer requisição de validação
+            fetch(`/epi/api/validar-ca/${codigoCA}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.valido) {
+                        resultadoDiv.innerHTML = `
+                            <div class="validation-message">
+                                <div class="alert alert-success mb-0">
+                                    <h6><i class="fas fa-check-circle me-2"></i>CA Válido</h6>
+                                    <p class="mb-1"><strong>Descrição:</strong> ${data.descricao || 'N/A'}</p>
+                                    <p class="mb-1"><strong>Fabricante:</strong> ${data.fabricante || 'N/A'}</p>
+                                    <p class="mb-0"><strong>Validade:</strong> ${data.data_validade || 'N/A'}</p>
+                                </div>
+                            </div>
+                        `;
+
+                        // Preencher campos automaticamente se disponível
+                        if (data.fabricante && !document.getElementById('fabricante').value) {
+                            document.getElementById('fabricante').value = data.fabricante;
+                        }
+                        if (data.data_validade && !document.getElementById('data_validade_ca').value) {
+                            const dataFormatada = new Date(data.data_validade).toISOString().split('T')[0];
+                            document.getElementById('data_validade_ca').value = dataFormatada;
+                        }
+                    } else {
+                        resultadoDiv.innerHTML = `
+                            <div class="validation-message">
+                                <div class="alert alert-warning mb-0">
+                                    <h6><i class="fas fa-exclamation-triangle me-2"></i>CA Não Encontrado</h6>
+                                    <p class="mb-0">O código CA ${codigoCA} não foi encontrado na base de dados. Verifique se está correto.</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    resultadoDiv.innerHTML = `
+                        <div class="validation-message">
+                            <div class="alert alert-danger mb-0">
+                                <h6><i class="fas fa-times-circle me-2"></i>Erro de Conexão</h6>
+                                <p class="mb-0">Não foi possível validar o CA. Tente novamente mais tarde.</p>
+                            </div>
+                        </div>
+                    `;
+                });
+        }
+
+        // Função para limpar formulário
+        function limparFormulario() {
+            if (confirm('Tem certeza que deseja limpar todos os campos?')) {
+                document.getElementById('form-epi').reset();
+                removerImagem();
+                document.getElementById('resultado-validacao').style.display = 'none';
+            }
+        }
+
+        // Drag and drop para upload de imagem
+        const uploadArea = document.querySelector('.upload-area');
+
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('imagem').files = files;
+                previewImagem(document.getElementById('imagem'));
+            }
+        });
+
+        // Validação do formulário
+        document.getElementById('form-epi').addEventListener('submit', function(e) {
+            const nome = document.getElementById('nome').value.trim();
+            const codigoCA = document.getElementById('codigo_ca').value.trim();
+            const dataValidade = document.getElementById('data_validade_ca').value;
+
+            if (!nome || !codigoCA || !dataValidade) {
+                e.preventDefault();
+                alert('Por favor, preencha todos os campos obrigatórios (*)');
+                return;
+            }
+
+            // Validar se a data não é no passado
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const dataCA = new Date(dataValidade);
+
+            if (dataCA < hoje) {
+                e.preventDefault();
+                alert('A data de validade do CA não pode ser no passado');
+                return;
+            }
+        });
+    </script>
+</body>
+</html>

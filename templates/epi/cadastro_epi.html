@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de EPIs - Sistema de Gestão</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #cc0000;
+            --secondary-color: #990000;
+        }
+
+        .navbar {
+            background-color: var(--primary-color) !important;
+        }
+
+        .btn-custom {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-custom:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 25px 25px;
+        }
+
+        .status-badge {
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-valido { background-color: #d4edda; color: #155724; }
+        .status-vencendo { background-color: #fff3cd; color: #856404; }
+        .status-vencido { background-color: #f8d7da; color: #721c24; }
+
+        .epi-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(204, 0, 0, 0.05);
+        }
+
+        .search-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('epi.index') }}">
+                <i class="fas fa-hard-hat me-2"></i>Sistema de Gestão de EPIs
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('epi.index') }}">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar ao Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-0">
+                        <i class="fas fa-box-open me-3"></i>Cadastro de EPIs
+                    </h1>
+                    <p class="mb-0 mt-2">Gerencie o inventário completo de Equipamentos de Proteção Individual</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{{ url_for('epi.novo_epi') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-plus me-2"></i>Novo EPI
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Alerts -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Filtros e Busca -->
+        <div class="search-container">
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="filtro-busca" class="form-label">Buscar EPIs:</label>
+                    <input type="text" class="form-control" id="filtro-busca" placeholder="Nome, CA ou fabricante...">
+                </div>
+                <div class="col-md-3">
+                    <label for="filtro-tipo" class="form-label">Tipo de Proteção:</label>
+                    <select class="form-select" id="filtro-tipo">
+                        <option value="">Todos os tipos</option>
+                        {% for tipo in tipos_protecao %}
+                            <option value="{{ tipo }}">{{ tipo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="filtro-status" class="form-label">Status da Validade:</label>
+                    <select class="form-select" id="filtro-status">
+                        <option value="">Todos os status</option>
+                        <option value="valido">Válido</option>
+                        <option value="vencendo">Vencendo em 30 dias</option>
+                        <option value="vencido">Vencido</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-custom w-100" onclick="aplicarFiltros()">
+                        <i class="fas fa-search me-2"></i>Filtrar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de EPIs -->
+        <div class="card">
+            <div class="card-header bg-transparent">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>EPIs Cadastrados
+                        </h5>
+                    </div>
+                    <div class="col-auto">
+                        <span class="badge bg-primary">{{ epis|length }} EPIs</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="tabela-epis">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Imagem</th>
+                                <th>Nome</th>
+                                <th>CA</th>
+                                <th>Fabricante</th>
+                                <th>Tipo</th>
+                                <th>Validade CA</th>
+                                <th>Estoque</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for epi in epis %}
+                            <tr data-epi-id="{{ epi.id }}">
+                                <td>
+                                    {% if epi.imagem_url %}
+                                        <img src="{{ epi.imagem_url }}" alt="{{ epi.nome }}" class="epi-image">
+                                    {% else %}
+                                        <div class="epi-image bg-light d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-image text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>{{ epi.nome }}</strong>
+                                    {% if epi.descricao %}
+                                        <br><small class="text-muted">{{ epi.descricao[:50] }}{% if epi.descricao|length > 50 %}...{% endif %}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ epi.codigo_ca }}</span>
+                                </td>
+                                <td>{{ epi.fabricante or '-' }}</td>
+                                <td>
+                                    {% if epi.tipo_protecao %}
+                                        <span class="badge bg-info">{{ epi.tipo_protecao }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ epi.data_validade_ca.strftime('%d/%m/%Y') if epi.data_validade_ca }}
+                                    <br><small class="text-muted">
+                                        {% if epi.dias_para_vencimento is not none %}
+                                            {% if epi.dias_para_vencimento < 0 %}
+                                                Venceu há {{ -epi.dias_para_vencimento }} dias
+                                            {% elif epi.dias_para_vencimento == 0 %}
+                                                Vence hoje
+                                            {% else %}
+                                                {{ epi.dias_para_vencimento }} dias
+                                            {% endif %}
+                                        {% endif %}
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="fw-bold {% if epi.estoque_atual <= epi.estoque_minimo %}text-danger{% endif %}">
+                                        {{ epi.estoque_atual }}
+                                    </span>
+                                    <br><small class="text-muted">Min: {{ epi.estoque_minimo }}</small>
+                                </td>
+                                <td>
+                                    {% set status = epi.status_validade %}
+                                    <span class="status-badge status-{{ status }}">
+                                        {% if status == 'valido' %}
+                                            <i class="fas fa-check-circle me-1"></i>Válido
+                                        {% elif status == 'vence_em_30_dias' %}
+                                            <i class="fas fa-exclamation-triangle me-1"></i>Vencendo
+                                        {% elif status == 'vencido' %}
+                                            <i class="fas fa-times-circle me-1"></i>Vencido
+                                        {% else %}
+                                            <i class="fas fa-question-circle me-1"></i>Indefinido
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-info" 
+                                                onclick="visualizarEPI({{ epi.id }})" 
+                                                title="Visualizar">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <a href="{{ url_for('epi.editar_epi', epi_id=epi.id) }}" 
+                                           class="btn btn-outline-warning" 
+                                           title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-success" 
+                                                onclick="validarCA('{{ epi.codigo_ca }}')" 
+                                                title="Validar CA">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger" 
+                                                onclick="excluirEPI({{ epi.id }})" 
+                                                title="Excluir">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Visualização -->
+    <div class="modal fade" id="modalVisualizacao" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-eye me-2"></i>Detalhes do EPI
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modal-visualizacao-body">
+                    <!-- Conteúdo será carregado via JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Validação de CA -->
+    <div class="modal fade" id="modalValidacaoCA" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-check-circle me-2"></i>Validação de CA
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modal-validacao-body">
+                    <!-- Conteúdo será carregado via JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Inicializar DataTable
+            $('#tabela-epis').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/pt-BR.json'
+                },
+                responsive: true,
+                pageLength: 25,
+                order: [[1, 'asc']], // Ordenar por nome
+                columnDefs: [
+                    { orderable: false, targets: [0, 8] } // Desabilitar ordenação na imagem e ações
+                ]
+            });
+        });
+
+        function aplicarFiltros() {
+            const busca = document.getElementById('filtro-busca').value;
+            const tipo = document.getElementById('filtro-tipo').value;
+            const status = document.getElementById('filtro-status').value;
+
+            // Implementar filtros personalizados
+            const table = $('#tabela-epis').DataTable();
+            
+            // Filtro de busca global
+            table.search(busca).draw();
+            
+            // Filtros específicos seriam implementados aqui
+            // Por simplicidade, usando apenas o filtro de busca global
+        }
+
+        function visualizarEPI(epiId) {
+            // Fazer requisição AJAX para obter detalhes do EPI
+            fetch(`/epi/api/epi/${epiId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Erro ao carregar dados do EPI');
+                        return;
+                    }
+                    
+                    document.getElementById('modal-visualizacao-body').innerHTML = `
+                        <div class="row">
+                            <div class="col-md-4">
+                                ${data.imagem_url ? 
+                                    `<img src="${data.imagem_url}" class="img-fluid rounded" alt="${data.nome}">` :
+                                    '<div class="bg-light rounded p-4 text-center"><i class="fas fa-image fa-3x text-muted"></i></div>'
+                                }
+                            </div>
+                            <div class="col-md-8">
+                                <h6><strong>${data.nome}</strong></h6>
+                                <p>${data.descricao || 'Sem descrição'}</p>
+                                
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Código CA:</strong></td>
+                                        <td>${data.codigo_ca}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Fabricante:</strong></td>
+                                        <td>${data.fabricante || '-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Tipo de Proteção:</strong></td>
+                                        <td>${data.tipo_protecao || '-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Data Validade CA:</strong></td>
+                                        <td>${data.data_validade_ca ? new Date(data.data_validade_ca).toLocaleDateString('pt-BR') : '-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Estoque Atual:</strong></td>
+                                        <td>${data.estoque_atual}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Estoque Mínimo:</strong></td>
+                                        <td>${data.estoque_minimo}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                    
+                    new bootstrap.Modal(document.getElementById('modalVisualizacao')).show();
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao carregar dados do EPI');
+                });
+        }
+
+        function validarCA(codigoCA) {
+            document.getElementById('modal-validacao-body').innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                    <p>Validando CA ${codigoCA}...</p>
+                </div>
+            `;
+            
+            new bootstrap.Modal(document.getElementById('modalValidacaoCA')).show();
+            
+            // Fazer requisição de validação
+            fetch(`/epi/api/validar-ca/${codigoCA}`)
+                .then(response => response.json())
+                .then(data => {
+                    let resultadoHTML = '';
+                    
+                    if (data.valido) {
+                        resultadoHTML = `
+                            <div class="alert alert-success">
+                                <h6><i class="fas fa-check-circle me-2"></i>CA Válido</h6>
+                                <table class="table table-sm mb-0">
+                                    <tr><td><strong>Código CA:</strong></td><td>${data.codigo_ca}</td></tr>
+                                    <tr><td><strong>Descrição:</strong></td><td>${data.descricao || '-'}</td></tr>
+                                    <tr><td><strong>Fabricante:</strong></td><td>${data.fabricante || '-'}</td></tr>
+                                    <tr><td><strong>Data Validade:</strong></td><td>${data.data_validade || '-'}</td></tr>
+                                    <tr><td><strong>Situação:</strong></td><td>${data.situacao || '-'}</td></tr>
+                                </table>
+                            </div>
+                        `;
+                    } else {
+                        resultadoHTML = `
+                            <div class="alert alert-danger">
+                                <h6><i class="fas fa-times-circle me-2"></i>CA Inválido ou Não Encontrado</h6>
+                                <p>O código CA ${codigoCA} não foi encontrado ou está inválido.</p>
+                                ${data.error ? `<small>Erro: ${data.error}</small>` : ''}
+                            </div>
+                        `;
+                    }
+                    
+                    document.getElementById('modal-validacao-body').innerHTML = resultadoHTML;
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    document.getElementById('modal-validacao-body').innerHTML = `
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Erro de Conexão</h6>
+                            <p>Não foi possível validar o CA. Tente novamente mais tarde.</p>
+                        </div>
+                    `;
+                });
+        }
+
+        function excluirEPI(epiId) {
+            if (confirm('Tem certeza que deseja excluir este EPI? Esta ação não pode ser desfeita.')) {
+                // Fazer requisição de exclusão
+                fetch(`/epi/cadastro/excluir/${epiId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload(); // Recarregar a página
+                    } else {
+                        alert('Erro ao excluir EPI');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao excluir EPI');
+                });
+            }
+        }
+    </script>
+</body>
+</html>
