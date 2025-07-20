@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de Gestão de EPIs{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #2c5aa0;
+            --secondary-color: #f8f9fa;
+            --success-color: #198754;
+            --warning-color: #fd7e14;
+            --danger-color: #dc3545;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary-color), #1a4480);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.3rem;
+        }
+
+        .sidebar {
+            background: white;
+            min-height: calc(100vh - 76px);
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+            border-right: 1px solid #dee2e6;
+        }
+
+        .nav-pills .nav-link {
+            color: #495057;
+            border-radius: 8px;
+            margin: 2px 0;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-pills .nav-link:hover {
+            background-color: #e9ecef;
+            color: var(--primary-color);
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .nav-pills .nav-link i {
+            margin-right: 8px;
+            width: 20px;
+        }
+
+        .content-area {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin: 1rem 0;
+        }
+
+        .card-custom {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #fff, #f8f9fa);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .stat-card.warning {
+            border-left-color: var(--warning-color);
+        }
+
+        .stat-card.danger {
+            border-left-color: var(--danger-color);
+        }
+
+        .stat-card.success {
+            border-left-color: var(--success-color);
+        }
+
+        .table-responsive {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .table thead th {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            font-weight: 500;
+            padding: 1rem;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .btn-custom {
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .alert-custom {
+            border: none;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .badge-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            padding: 12px 16px;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(44, 90, 160, 0.25);
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-color), #1a4480);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .breadcrumb-custom {
+            background: transparent;
+            padding: 0;
+            margin: 0;
+        }
+
+        .breadcrumb-custom .breadcrumb-item a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+        }
+
+        .breadcrumb-custom .breadcrumb-item.active {
+            color: white;
+        }
+
+        /* Estilos responsivos */
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+            }
+
+            .content-area {
+                margin: 0.5rem 0;
+                padding: 1rem;
+            }
+
+            .table-responsive {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Animações */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-content {
+            border-radius: 12px;
+            border: none;
+        }
+
+        .modal-header {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .modal-header .btn-close {
+            filter: invert(1);
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('epi.dashboard') }}">
+                <i class="bi bi-shield-check"></i>
+                Sistema de Gestão de EPIs
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i>
+                            Usuário Sistema
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-person"></i> Perfil</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Configurações</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Layout principal -->
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav nav-pills flex-column mb-auto">
+                        <li class="nav-item">
+                            <a href="{{ url_for('epi.dashboard') }}"
+                                class="nav-link {% if request.endpoint == 'epi.dashboard' %}active{% endif %}">
+                                <i class="bi bi-speedometer2"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('epi.inventario') }}"
+                                class="nav-link {% if 'inventario' in request.endpoint %}active{% endif %}">
+                                <i class="bi bi-box-seam"></i>
+                                Inventário de EPIs
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('epi.gestao_entregas') }}"
+                                class="nav-link {% if 'entregas' in request.endpoint or 'funcionario' in request.endpoint %}active{% endif %}">
+                                <i class="bi bi-clipboard-check"></i>
+                                Gestão de Entregas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('epi.relatorios') }}"
+                                class="nav-link {% if 'relatorios' in request.endpoint %}active{% endif %}">
+                                <i class="bi bi-graph-up"></i>
+                                Relatórios e Alertas
+                            </a>
+                        </li>
+                        <li>
+                            <hr class="my-3">
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('epi.configurar_alertas') }}"
+                                class="nav-link {% if 'configurar' in request.endpoint %}active{% endif %}">
+                                <i class="bi bi-gear"></i>
+                                Configurações
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Conteúdo principal -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Breadcrumb -->
+                {% if breadcrumb %}
+                <nav aria-label="breadcrumb" class="mt-3">
+                    <ol class="breadcrumb breadcrumb-custom">
+                        {% for item in breadcrumb %}
+                        {% if loop.last %}
+                        <li class="breadcrumb-item active">{{ item.nome }}</li>
+                        {% else %}
+                        <li class="breadcrumb-item">
+                            <a href="{{ item.url }}">{{ item.nome }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    </ol>
+                </nav>
+                {% endif %}
+
+                <!-- Mensagens Flash -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="mt-3">
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show alert-custom"
+                        role="alert">
+                        {% if category == 'success' %}
+                        <i class="bi bi-check-circle"></i>
+                        {% elif category == 'error' %}
+                        <i class="bi bi-exclamation-triangle"></i>
+                        {% elif category == 'warning' %}
+                        <i class="bi bi-exclamation-circle"></i>
+                        {% else %}
+                        <i class="bi bi-info-circle"></i>
+                        {% endif %}
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <!-- Conteúdo da página -->
+                <div class="content-area fade-in">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Spinner de carregamento -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+        <p class="mt-2">Carregando...</p>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+    <!-- Scripts personalizados -->
+    <script>
+        // Função para mostrar/ocultar loading
+        function showLoading() {
+            document.getElementById('loadingSpinner').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingSpinner').style.display = 'none';
+        }
+
+        // Auto-hide alerts após 5 segundos
+        $(document).ready(function () {
+            setTimeout(function () {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+
+            // Confirmação para exclusões
+            $('.btn-delete').click(function (e) {
+                if (!confirm('Tem certeza que deseja excluir este item?')) {
+                    e.preventDefault();
+                }
+            });
+
+            // Aplicar máscara em campos de data
+            $('input[type="date"]').each(function () {
+                if (!$(this).val()) {
+                    $(this).val(new Date().toISOString().split('T')[0]);
+                }
+            });
+        });
+
+        // Função para atualizar estatísticas via AJAX
+        function atualizarEstatisticas() {
+            fetch('/epi/api/estatisticas')
+                .then(response => response.json())
+                .then(data => {
+                    // Atualizar valores nas estatísticas do dashboard
+                    if (document.getElementById('totalEpis')) {
+                        document.getElementById('totalEpis').textContent = data.total_epis || 0;
+                    }
+                    if (document.getElementById('episEstoqueBaixo')) {
+                        document.getElementById('episEstoqueBaixo').textContent = data.epis_estoque_baixo || 0;
+                    }
+                    if (document.getElementById('episVencendo')) {
+                        document.getElementById('episVencendo').textContent = data.epis_vencendo_30_dias || 0;
+                    }
+                    if (document.getElementById('declaracoesMes')) {
+                        document.getElementById('declaracoesMes').textContent = data.declaracoes_mes_atual || 0;
+                    }
+                })
+                .catch(error => console.error('Erro ao atualizar estatísticas:', error));
+        }
+
+        // Atualizar estatísticas a cada 5 minutos (se estiver no dashboard)
+        if (window.location.pathname.includes('/epi/') &&
+            (window.location.pathname === '/epi/' || window.location.pathname.endsWith('/epi'))) {
+            setInterval(atualizarEstatisticas, 300000); // 5 minutos
+        }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

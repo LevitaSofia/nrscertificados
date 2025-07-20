@@ -12,7 +12,6 @@ def create_epi_models(db):
     class EPI(db.Model):
         """Modelo para cadastro de EPIs (Inventário)"""
         __tablename__ = 'epis'
-        __table_args__ = {'extend_existing': True}
 
         id = db.Column(db.Integer, primary_key=True)
         nome = db.Column(db.String(200), nullable=False)
@@ -74,7 +73,6 @@ def create_epi_models(db):
     class DeclaracaoEPI(db.Model):
         """Modelo para declarações de recebimento de EPI por funcionário"""
         __tablename__ = 'declaracoes_epi'
-        __table_args__ = {'extend_existing': True}
 
         id = db.Column(db.Integer, primary_key=True)
         funcionario_id = db.Column(db.Integer, nullable=False)
@@ -103,7 +101,6 @@ def create_epi_models(db):
     class EntregaEPI(db.Model):
         """Modelo para registro de entregas/devoluções de EPIs"""
         __tablename__ = 'entregas_epi'
-        __table_args__ = {'extend_existing': True}
 
         id = db.Column(db.Integer, primary_key=True)
         declaracao_id = db.Column(db.Integer, db.ForeignKey(
@@ -137,7 +134,6 @@ def create_epi_models(db):
     class AlertaEPI(db.Model):
         """Modelo para alertas automáticos do sistema de EPIs"""
         __tablename__ = 'alertas_epi'
-        __table_args__ = {'extend_existing': True}
 
         id = db.Column(db.Integer, primary_key=True)
         tipo_alerta = db.Column(db.String(50), nullable=False)
@@ -172,7 +168,6 @@ def create_epi_models(db):
     class LogValidacaoCA(db.Model):
         """Modelo para log de validações de CA junto aos órgãos competentes"""
         __tablename__ = 'logs_validacao_ca'
-        __table_args__ = {'extend_existing': True}
 
         id = db.Column(db.Integer, primary_key=True)
         epi_id = db.Column(db.Integer, db.ForeignKey(
@@ -190,7 +185,6 @@ def create_epi_models(db):
     class ConfiguracaoEPI(db.Model):
         """Modelo para configurações do sistema de EPIs"""
         __tablename__ = 'configuracoes_epi'
-        __table_args__ = {'extend_existing': True}
 
         id = db.Column(db.Integer, primary_key=True)
         chave = db.Column(db.String(100), nullable=False, unique=True)
@@ -211,25 +205,6 @@ def create_epi_models(db):
                 'descricao': self.descricao,
                 'tipo_dado': self.tipo_dado
             }
-
-        @classmethod
-        def set_config(cls, chave, valor, descricao=None, tipo_dado='string'):
-            """Método para definir uma configuração"""
-            config = cls(
-                chave=chave,
-                valor=valor,
-                descricao=descricao,
-                tipo_dado=tipo_dado
-            )
-            db.session.add(config)
-            db.session.commit()
-            return config
-
-        @classmethod
-        def get_config(cls, chave, default=None):
-            """Método para obter uma configuração"""
-            config = cls.query.filter_by(chave=chave).first()
-            return config.valor if config else default
 
     # Retornar todas as classes criadas
     return {

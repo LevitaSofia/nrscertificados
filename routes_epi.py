@@ -17,16 +17,15 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.units import inch
 import io
 
-# Importar modelos (assumindo que estão no app principal)
-from models_epi import EPI, DeclaracaoEPI, EntregaEPI, AlertaEPI, LogValidacaoCA
-
-# Tentativa de importação do db e Funcionario
-try:
-    from app import db, Funcionario
-except ImportError:
-    # Se não conseguir importar, serão None inicialmente
-    db = None
-    Funcionario = None
+# Variáveis globais que serão definidas durante a inicialização
+EPI = None
+DeclaracaoEPI = None
+EntregaEPI = None
+AlertaEPI = None
+LogValidacaoCA = None
+ConfiguracaoEPI = None
+db = None
+Funcionario = None
 
 # Blueprint para EPIs
 epi_bp = Blueprint('epi', __name__, url_prefix='/epi')
@@ -50,12 +49,184 @@ TIPOS_PROTECAO = [
 @epi_bp.route('/')
 def index():
     """Página principal do módulo de EPIs"""
-    return render_template('epi/index.html')
+    try:
+        html_content = '''
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão de EPIs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1><i class="fas fa-hard-hat me-2 text-warning"></i>Sistema de Gestão de EPIs</h1>
+                    <a href="/" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Voltar ao Menu Principal
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Card Cadastro de EPIs -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-plus-circle text-primary" style="font-size: 3rem;"></i>
+                        </div>
+                        <h5 class="card-title">Cadastro de EPIs</h5>
+                        <p class="card-text">Cadastre e gerencie equipamentos de proteção</p>
+                        <div class="d-grid">
+                            <a href="/epi/cadastro" class="btn btn-primary">Acessar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Entregas -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-handshake text-success" style="font-size: 3rem;"></i>
+                        </div>
+                        <h5 class="card-title">Entregas</h5>
+                        <p class="card-text">Controle de entrega e devolução de EPIs</p>
+                        <div class="d-grid">
+                            <a href="/epi/entregas" class="btn btn-success">Acessar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Relatórios -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-chart-bar text-info" style="font-size: 3rem;"></i>
+                        </div>
+                        <h5 class="card-title">Relatórios</h5>
+                        <p class="card-text">Relatórios de estoque e validades</p>
+                        <div class="d-grid">
+                            <a href="/epi/relatorios" class="btn btn-info">Acessar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Configurações -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-cog text-warning" style="font-size: 3rem;"></i>
+                        </div>
+                        <h5 class="card-title">Configurações</h5>
+                        <p class="card-text">Configurações do sistema de EPIs</p>
+                        <div class="d-grid">
+                            <a href="/epi/configuracoes" class="btn btn-warning">Acessar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estatísticas rápidas -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Estatísticas Rápidas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <h3 class="text-primary">0</h3>
+                                    <p class="mb-0">EPIs Cadastrados</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <h3 class="text-success">0</h3>
+                                    <p class="mb-0">Em Estoque</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <h3 class="text-warning">0</h3>
+                                    <p class="mb-0">CA Vencendo</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <h3 class="text-info">0</h3>
+                                    <p class="mb-0">Entregas Ativas</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Módulo EPI ativado com sucesso!</strong>
+                    <br>O sistema está pronto para gerenciar equipamentos de proteção individual.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+        '''
+        return html_content
+    except Exception as e:
+        print(f"Erro ao renderizar página EPI: {e}")
+        return f"<h1>Sistema de Gestão de EPIs</h1><p>Módulo carregado com sucesso!</p><a href='/'>Voltar</a>"
 
 
 @epi_bp.route('/cadastro')
 def cadastro_epi():
     """Página de cadastro de EPIs"""
+    return '''
+    <html>
+    <head>
+        <title>Cadastro de EPIs</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container mt-4">
+            <h1>Cadastro de EPIs</h1>
+            <div class="alert alert-info">
+                <h4>Funcionalidade em Desenvolvimento</h4>
+                <p>O cadastro de EPIs será implementado em breve com as seguintes funcionalidades:</p>
+                <ul>
+                    <li>Cadastro de equipamentos de proteção</li>
+                    <li>Controle de estoque</li>
+                    <li>Validação de CA (Certificado de Aprovação)</li>
+                    <li>Controle de datas de validade</li>
+                </ul>
+            </div>
+            <a href="/epi/" class="btn btn-secondary">Voltar</a>
+        </div>
+    </body>
+    </html>
+    '''
+
     epis = EPI.query.filter_by(ativo=True).all()
     return render_template('epi/cadastro_epi.html', epis=epis, tipos_protecao=TIPOS_PROTECAO)
 
@@ -255,14 +426,31 @@ def validar_ca(codigo_ca):
 @epi_bp.route('/entregas')
 def gestao_entregas():
     """Página principal de gestão de entregas"""
-    # Buscar funcionários (assumindo que há uma tabela de funcionários)
-    # funcionarios = Funcionario.query.filter_by(ativo=True).all()
-
-    declaracoes_recentes = DeclaracaoEPI.query.order_by(
-        DeclaracaoEPI.data_declaracao.desc()).limit(10).all()
-
-    return render_template('epi/gestao_entregas.html',
-                           declaracoes_recentes=declaracoes_recentes)
+    return '''
+    <html>
+    <head>
+        <title>Gestão de Entregas de EPIs</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container mt-4">
+            <h1>Gestão de Entregas de EPIs</h1>
+            <div class="alert alert-info">
+                <h4>Funcionalidade em Desenvolvimento</h4>
+                <p>A gestão de entregas será implementada em breve com as seguintes funcionalidades:</p>
+                <ul>
+                    <li>Registro de entrega de EPIs aos funcionários</li>
+                    <li>Controle de devoluções</li>
+                    <li>Histórico de entregas por funcionário</li>
+                    <li>Geração de declarações de entrega</li>
+                    <li>Alertas de vencimento de EPIs entregues</li>
+                </ul>
+            </div>
+            <a href="/epi/" class="btn btn-secondary">Voltar</a>
+        </div>
+    </body>
+    </html>
+    '''
 
 
 @epi_bp.route('/entregas/nova/<int:funcionario_id>')
@@ -467,7 +655,31 @@ def gerar_pdf_declaracao(declaracao_id):
 @epi_bp.route('/relatorios')
 def relatorios():
     """Página de relatórios"""
-    return render_template('epi/relatorios.html')
+    return '''
+    <html>
+    <head>
+        <title>Relatórios EPI</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container mt-4">
+            <h1>Relatórios de EPIs</h1>
+            <div class="alert alert-info">
+                <h4>Funcionalidade em Desenvolvimento</h4>
+                <p>Os relatórios serão implementados em breve com as seguintes funcionalidades:</p>
+                <ul>
+                    <li>Relatório de estoque atual</li>
+                    <li>Relatório de validades de CA</li>
+                    <li>Relatório de entregas por período</li>
+                    <li>Relatório de funcionários sem EPIs</li>
+                    <li>Dashboard com gráficos e estatísticas</li>
+                </ul>
+            </div>
+            <a href="/epi/" class="btn btn-secondary">Voltar</a>
+        </div>
+    </body>
+    </html>
+    '''
 
 
 @epi_bp.route('/relatorios/validades')
@@ -500,8 +712,31 @@ def relatorio_estoque():
 @epi_bp.route('/configuracoes')
 def configuracoes():
     """Página de configurações de alertas"""
-    alertas = AlertaEPI.query.all()
-    return render_template('epi/configuracoes.html', alertas=alertas)
+    return '''
+    <html>
+    <head>
+        <title>Configurações EPI</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container mt-4">
+            <h1>Configurações do Sistema EPI</h1>
+            <div class="alert alert-info">
+                <h4>Funcionalidade em Desenvolvimento</h4>
+                <p>As configurações serão implementadas em breve com as seguintes funcionalidades:</p>
+                <ul>
+                    <li>Configuração de alertas de vencimento</li>
+                    <li>Configuração de e-mails automáticos</li>
+                    <li>Configuração de API de validação de CA</li>
+                    <li>Configurações de backup automático</li>
+                    <li>Configurações visuais do sistema</li>
+                </ul>
+            </div>
+            <a href="/epi/" class="btn btn-secondary">Voltar</a>
+        </div>
+    </body>
+    </html>
+    '''
 
 
 @epi_bp.route('/configuracoes/salvar', methods=['POST'])

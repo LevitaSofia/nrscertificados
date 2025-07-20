@@ -1,0 +1,598 @@
+{% extends "base.html" %}
+
+{% block title %}Entregas de EPI - Sistema de Gestão de EPIs{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>
+                    <i class="fas fa-hand-holding text-primary"></i>
+                    Entregas de EPI
+                </h2>
+                <p class="text-muted">Controle de entrega e devolução de equipamentos</p>
+            </div>
+            <div>
+                <button type="button" class="btn btn-primary" onclick="novaEntrega()">
+                    <i class="fas fa-plus"></i>
+                    Nova Entrega
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form id="filtrosForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="filtro_funcionario" class="form-label">Funcionário:</label>
+                        <input type="text" class="form-control" id="filtro_funcionario"
+                            placeholder="Nome do funcionário...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filtro_epi" class="form-label">EPI:</label>
+                        <input type="text" class="form-control" id="filtro_epi" placeholder="Nome do EPI...">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filtro_data_inicio" class="form-label">Data Início:</label>
+                        <input type="date" class="form-control" id="filtro_data_inicio">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filtro_data_fim" class="form-label">Data Fim:</label>
+                        <input type="date" class="form-control" id="filtro_data_fim">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filtro_status" class="form-label">Status:</label>
+                        <select class="form-select" id="filtro_status">
+                            <option value="">Todos</option>
+                            <option value="Entregue">Entregue</option>
+                            <option value="Devolvido">Devolvido</option>
+                            <option value="Perdido">Perdido</option>
+                            <option value="Danificado">Danificado</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="button" class="btn btn-outline-primary" onclick="aplicarFiltros()">
+                            <i class="fas fa-filter"></i>
+                            Filtrar
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="limparFiltros()">
+                            <i class="fas fa-eraser"></i>
+                            Limpar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela de Entregas -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list"></i>
+                    Lista de Entregas
+                </h5>
+                <div>
+                    <button type="button" class="btn btn-outline-light btn-sm" onclick="exportarEntregas()">
+                        <i class="fas fa-download"></i>
+                        Exportar
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="tabelaEntregas">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Data</th>
+                                <th>Funcionário</th>
+                                <th>EPI</th>
+                                <th>Quantidade</th>
+                                <th>Status</th>
+                                <th>Data Devolução</th>
+                                <th>Observações</th>
+                                <th width="150">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpoTabelaEntregas">
+                            <!-- Dados carregados via AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Loading -->
+                <div id="loadingEntregas" class="text-center p-4" style="display: none;">
+                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                    <p class="mt-2">Carregando entregas...</p>
+                </div>
+
+                <!-- Sem dados -->
+                <div id="semDadosEntregas" class="text-center p-4" style="display: none;">
+                    <i class="fas fa-inbox fa-3x text-muted"></i>
+                    <p class="mt-2 text-muted">Nenhuma entrega encontrada</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Paginação -->
+<div class="row mt-3">
+    <div class="col-12">
+        <nav>
+            <ul class="pagination justify-content-center" id="paginacaoEntregas">
+                <!-- Paginação carregada via JavaScript -->
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Modal Nova Entrega -->
+<div class="modal fade" id="modalNovaEntrega" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus"></i>
+                    Nova Entrega de EPI
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNovaEntrega">
+                    <div class="row g-3">
+                        <!-- Funcionário -->
+                        <div class="col-md-6">
+                            <label for="funcionario_id" class="form-label">
+                                <i class="fas fa-user"></i>
+                                Funcionário <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="funcionario_id" name="funcionario_id" required>
+                                <option value="">Selecione o funcionário...</option>
+                                <!-- Opções carregadas via AJAX -->
+                            </select>
+                        </div>
+
+                        <!-- EPI -->
+                        <div class="col-md-6">
+                            <label for="epi_id" class="form-label">
+                                <i class="fas fa-shield-alt"></i>
+                                EPI <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="epi_id" name="epi_id" required>
+                                <option value="">Selecione o EPI...</option>
+                                <!-- Opções carregadas via AJAX -->
+                            </select>
+                        </div>
+
+                        <!-- Quantidade -->
+                        <div class="col-md-4">
+                            <label for="quantidade" class="form-label">
+                                <i class="fas fa-sort-numeric-up"></i>
+                                Quantidade <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="quantidade" name="quantidade" min="1"
+                                value="1" required>
+                            <div class="form-text">Estoque disponível: <span id="estoqueDisponivel">-</span></div>
+                        </div>
+
+                        <!-- Data da Entrega -->
+                        <div class="col-md-4">
+                            <label for="data_entrega" class="form-label">
+                                <i class="fas fa-calendar"></i>
+                                Data da Entrega <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" class="form-control" id="data_entrega" name="data_entrega" required>
+                        </div>
+
+                        <!-- Validade Prevista -->
+                        <div class="col-md-4">
+                            <label for="validade_prevista" class="form-label">
+                                <i class="fas fa-clock"></i>
+                                Validade Prevista
+                            </label>
+                            <input type="date" class="form-control" id="validade_prevista" name="validade_prevista">
+                        </div>
+
+                        <!-- Observações -->
+                        <div class="col-12">
+                            <label for="observacoes" class="form-label">
+                                <i class="fas fa-comment"></i>
+                                Observações
+                            </label>
+                            <textarea class="form-control" id="observacoes" name="observacoes" rows="3"
+                                placeholder="Informações adicionais sobre a entrega..."></textarea>
+                        </div>
+
+                        <!-- Assinatura Digital -->
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="gerar_declaracao"
+                                    name="gerar_declaracao" checked>
+                                <label class="form-check-label" for="gerar_declaracao">
+                                    <i class="fas fa-file-pdf text-danger"></i>
+                                    Gerar declaração de entrega (PDF)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="salvarEntrega()">
+                    <i class="fas fa-save"></i>
+                    Registrar Entrega
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Devolução -->
+<div class="modal fade" id="modalDevolucao" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="fas fa-undo"></i>
+                    Registrar Devolução
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formDevolucao">
+                    <input type="hidden" id="devolucao_entrega_id" name="entrega_id">
+
+                    <div class="mb-3">
+                        <label for="data_devolucao" class="form-label">
+                            <i class="fas fa-calendar"></i>
+                            Data da Devolução <span class="text-danger">*</span>
+                        </label>
+                        <input type="date" class="form-control" id="data_devolucao" name="data_devolucao" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="condicao_devolucao" class="form-label">
+                            <i class="fas fa-clipboard-check"></i>
+                            Condição do EPI <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="condicao_devolucao" name="condicao_devolucao" required>
+                            <option value="">Selecione a condição...</option>
+                            <option value="Bom Estado">Bom Estado</option>
+                            <option value="Desgaste Normal">Desgaste Normal</option>
+                            <option value="Danificado">Danificado</option>
+                            <option value="Perdido">Perdido</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="observacoes_devolucao" class="form-label">
+                            <i class="fas fa-comment"></i>
+                            Observações
+                        </label>
+                        <textarea class="form-control" id="observacoes_devolucao" name="observacoes_devolucao" rows="3"
+                            placeholder="Detalhes sobre a condição do EPI..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-warning" onclick="salvarDevolucao()">
+                    <i class="fas fa-save"></i>
+                    Registrar Devolução
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let paginaAtual = 1;
+    const itensPorPagina = 10;
+
+    $(document).ready(function () {
+        // Definir data padrão como hoje
+        document.getElementById('data_entrega').value = new Date().toISOString().split('T')[0];
+
+        // Carregar dados iniciais
+        carregarEntregas();
+        carregarFuncionarios();
+        carregarEPIs();
+    });
+
+    function carregarEntregas(pagina = 1) {
+        paginaAtual = pagina;
+
+        document.getElementById('loadingEntregas').style.display = 'block';
+        document.getElementById('semDadosEntregas').style.display = 'none';
+        document.getElementById('corpoTabelaEntregas').innerHTML = '';
+
+        // Coletar filtros
+        const filtros = {
+            funcionario: document.getElementById('filtro_funcionario').value,
+            epi: document.getElementById('filtro_epi').value,
+            data_inicio: document.getElementById('filtro_data_inicio').value,
+            data_fim: document.getElementById('filtro_data_fim').value,
+            status: document.getElementById('filtro_status').value,
+            pagina: pagina,
+            por_pagina: itensPorPagina
+        };
+
+        const params = new URLSearchParams(filtros);
+
+        fetch(`/epi/api/entregas?${params}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingEntregas').style.display = 'none';
+
+                if (data.success && data.entregas.length > 0) {
+                    exibirEntregas(data.entregas);
+                    criarPaginacao(data.total_paginas, pagina);
+                } else {
+                    document.getElementById('semDadosEntregas').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                document.getElementById('loadingEntregas').style.display = 'none';
+                document.getElementById('semDadosEntregas').style.display = 'block';
+                console.error('Erro ao carregar entregas:', error);
+            });
+    }
+
+    function exibirEntregas(entregas) {
+        const tbody = document.getElementById('corpoTabelaEntregas');
+        let html = '';
+
+        entregas.forEach(entrega => {
+            const statusClass = {
+                'Entregue': 'success',
+                'Devolvido': 'primary',
+                'Perdido': 'danger',
+                'Danificado': 'warning'
+            }[entrega.status] || 'secondary';
+
+            html += `
+            <tr>
+                <td>${formatarData(entrega.data_entrega)}</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-user text-muted me-2"></i>
+                        ${entrega.funcionario_nome}
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-shield-alt text-primary me-2"></i>
+                        ${entrega.epi_nome}
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-light text-dark">${entrega.quantidade}</span>
+                </td>
+                <td>
+                    <span class="badge bg-${statusClass}">${entrega.status}</span>
+                </td>
+                <td>${entrega.data_devolucao ? formatarData(entrega.data_devolucao) : '-'}</td>
+                <td>
+                    ${entrega.observacoes ?
+                    `<span title="${entrega.observacoes}">${entrega.observacoes.substring(0, 30)}${entrega.observacoes.length > 30 ? '...' : ''}</span>`
+                    : '-'}
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                        ${entrega.status === 'Entregue' ?
+                    `<button type="button" class="btn btn-outline-warning" onclick="registrarDevolucao(${entrega.id})" title="Registrar Devolução">
+                                <i class="fas fa-undo"></i>
+                            </button>` : ''}
+                        <button type="button" class="btn btn-outline-info" onclick="verDetalhes(${entrega.id})" title="Ver Detalhes">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" onclick="gerarDeclaracao(${entrega.id})" title="Gerar PDF">
+                            <i class="fas fa-file-pdf"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    function criarPaginacao(totalPaginas, paginaAtual) {
+        const paginacao = document.getElementById('paginacaoEntregas');
+        let html = '';
+
+        // Botão anterior
+        html += `
+        <li class="page-item ${paginaAtual === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="carregarEntregas(${paginaAtual - 1})">Anterior</a>
+        </li>
+    `;
+
+        // Páginas
+        for (let i = 1; i <= totalPaginas; i++) {
+            if (i === paginaAtual || i === 1 || i === totalPaginas || Math.abs(i - paginaAtual) <= 2) {
+                html += `
+                <li class="page-item ${i === paginaAtual ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="carregarEntregas(${i})">${i}</a>
+                </li>
+            `;
+            } else if (i === paginaAtual - 3 || i === paginaAtual + 3) {
+                html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+        }
+
+        // Botão próximo
+        html += `
+        <li class="page-item ${paginaAtual === totalPaginas ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="carregarEntregas(${paginaAtual + 1})">Próximo</a>
+        </li>
+    `;
+
+        paginacao.innerHTML = html;
+    }
+
+    function carregarFuncionarios() {
+        fetch('/epi/api/funcionarios')
+            .then(response => response.json())
+            .then(data => {
+                const select = document.getElementById('funcionario_id');
+                let html = '<option value="">Selecione o funcionário...</option>';
+
+                data.funcionarios.forEach(func => {
+                    html += `<option value="${func.id}">${func.nome}</option>`;
+                });
+
+                select.innerHTML = html;
+            });
+    }
+
+    function carregarEPIs() {
+        fetch('/epi/api/epis-disponiveis')
+            .then(response => response.json())
+            .then(data => {
+                const select = document.getElementById('epi_id');
+                let html = '<option value="">Selecione o EPI...</option>';
+
+                data.epis.forEach(epi => {
+                    html += `<option value="${epi.id}" data-estoque="${epi.estoque_atual}">${epi.nome} (Estoque: ${epi.estoque_atual})</option>`;
+                });
+
+                select.innerHTML = html;
+            });
+    }
+
+    function novaEntrega() {
+        document.getElementById('formNovaEntrega').reset();
+        document.getElementById('data_entrega').value = new Date().toISOString().split('T')[0];
+        document.getElementById('estoqueDisponivel').textContent = '-';
+        new bootstrap.Modal(document.getElementById('modalNovaEntrega')).show();
+    }
+
+    function salvarEntrega() {
+        const form = document.getElementById('formNovaEntrega');
+        const formData = new FormData(form);
+
+        fetch('/epi/api/entregas', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('modalNovaEntrega')).hide();
+                    carregarEntregas(paginaAtual);
+
+                    if (data.pdf_url) {
+                        // Abrir PDF em nova aba
+                        window.open(data.pdf_url, '_blank');
+                    }
+
+                    alert('Entrega registrada com sucesso!');
+                } else {
+                    alert('Erro: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Erro ao registrar entrega!');
+                console.error(error);
+            });
+    }
+
+    function registrarDevolucao(entregaId) {
+        document.getElementById('devolucao_entrega_id').value = entregaId;
+        document.getElementById('data_devolucao').value = new Date().toISOString().split('T')[0];
+        new bootstrap.Modal(document.getElementById('modalDevolucao')).show();
+    }
+
+    function salvarDevolucao() {
+        const form = document.getElementById('formDevolucao');
+        const formData = new FormData(form);
+
+        fetch('/epi/api/devolucoes', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('modalDevolucao')).hide();
+                    carregarEntregas(paginaAtual);
+                    alert('Devolução registrada com sucesso!');
+                } else {
+                    alert('Erro: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Erro ao registrar devolução!');
+                console.error(error);
+            });
+    }
+
+    function aplicarFiltros() {
+        carregarEntregas(1);
+    }
+
+    function limparFiltros() {
+        document.getElementById('filtrosForm').reset();
+        carregarEntregas(1);
+    }
+
+    function exportarEntregas() {
+        const filtros = {
+            funcionario: document.getElementById('filtro_funcionario').value,
+            epi: document.getElementById('filtro_epi').value,
+            data_inicio: document.getElementById('filtro_data_inicio').value,
+            data_fim: document.getElementById('filtro_data_fim').value,
+            status: document.getElementById('filtro_status').value
+        };
+
+        const params = new URLSearchParams(filtros);
+        window.open(`/epi/api/exportar-entregas?${params}`, '_blank');
+    }
+
+    function gerarDeclaracao(entregaId) {
+        window.open(`/epi/api/declaracao-pdf/${entregaId}`, '_blank');
+    }
+
+    function formatarData(data) {
+        return new Date(data).toLocaleDateString('pt-BR');
+    }
+
+    // Event listeners
+    document.getElementById('epi_id').addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const estoque = selectedOption.getAttribute('data-estoque');
+        document.getElementById('estoqueDisponivel').textContent = estoque || '-';
+
+        // Ajustar quantidade máxima
+        const quantidadeInput = document.getElementById('quantidade');
+        if (estoque) {
+            quantidadeInput.max = estoque;
+            if (parseInt(quantidadeInput.value) > parseInt(estoque)) {
+                quantidadeInput.value = estoque;
+            }
+        }
+    });
+</script>
+{% endblock %}

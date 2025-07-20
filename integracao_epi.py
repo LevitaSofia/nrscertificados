@@ -9,40 +9,67 @@ def init_epi_module(app):
     """
     Inicializa o módulo de Gestão de EPIs no app principal
     """
-
-    # Importar o blueprint das rotas
-    from routes_epi import epi_bp
-
-    # Registrar o blueprint
-    app.register_blueprint(epi_bp)
-
-    # Importar modelos para criação das tabelas
     try:
-        from models_epi import (EPI, EntregaEPI, DeclaracaoEPI,
-                                AlertaEPI, LogValidacaoCA, ConfiguracaoEPI)
+        # Verificar se já foi inicializado
+        if hasattr(app, '_epi_initialized'):
+            print("✅ Módulo de Gestão de EPIs já foi inicializado anteriormente!")
+            return True
+
+        # Marcar como inicializado
+        app._epi_initialized = True
+
+        # Importar o db e modelos do app principal
         from app import db
+        from models_epi import create_epi_models
+        epi_models = create_epi_models(db)
+        globals().update(epi_models)
 
-        # Criar tabelas se não existirem
-        with app.app_context():
-            db.create_all()
+        # Importar e configurar as rotas
+        import routes_epi
+        routes_epi.EPI = epi_models['EPI']
+        routes_epi.DeclaracaoEPI = epi_models['DeclaracaoEPI']
+        routes_epi.EntregaEPI = epi_models['EntregaEPI']
+        routes_epi.AlertaEPI = epi_models['AlertaEPI']
+        routes_epi.LogValidacaoCA = epi_models['LogValidacaoCA']
+        routes_epi.ConfiguracaoEPI = epi_models['ConfiguracaoEPI']
+        routes_epi.db = db
+        from app import Funcionario
+        routes_epi.Funcionario = Funcionario
 
-            # Inserir configurações padrão se não existirem
-            inserir_configuracoes_padrao()
+        # Registrar o blueprint apenas se ainda não estiver registrado
+        if 'epi' not in app.blueprints:
+            from routes_epi import epi_bp
+            app.register_blueprint(epi_bp)
+            print("✅ Blueprint 'epi' registrado com sucesso!")
+        else:
+            print("🔵 Blueprint 'epi' já estava registrado.")
+
+        # Criar as tabelas EPI no banco
+        print("📊 Criando tabelas do módulo EPI...")
+        db.create_all()
+
+        print("⚙️ Inserindo configurações padrão...")
+        try:
+            inserir_configuracoes_padrao(epi_models['ConfiguracaoEPI'])
+        except Exception as config_error:
+            print(
+                f"⚠️ Aviso: Erro ao inserir configurações padrão: {config_error}")
 
         print("✅ Módulo de Gestão de EPIs inicializado com sucesso!")
+        return True
 
     except Exception as e:
         print(f"❌ Erro ao inicializar módulo de EPIs: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return False
 
-    return True
 
-
-def inserir_configuracoes_padrao():
+def inserir_configuracoes_padrao(ConfiguracaoEPI):
     """
     Insere configurações padrão do sistema se não existirem
     """
-    from models_epi import ConfiguracaoEPI
+    from app import db
 
     configuracoes_padrao = [
         # Alertas
@@ -90,9 +117,26 @@ def inserir_configuracoes_padrao():
     ]
 
     for chave, valor, descricao, tipo in configuracoes_padrao:
-        config_existente = ConfiguracaoEPI.query.filter_by(chave=chave).first()
-        if not config_existente:
-            ConfiguracaoEPI.set_config(chave, valor, descricao, tipo)
+        try:
+            config_existente = ConfiguracaoEPI.query.filter_by(
+                chave=chave).first()
+            if not config_existente:
+                ConfiguracaoEPI.set_config(chave, valor, descricao, tipo)
+        except Exception as e:
+            print(f"⚠️ Erro ao inserir configuração {chave}: {e}")
+            # Criar manualmente se o método set_config falhar
+            try:
+                config = ConfiguracaoEPI(
+                    chave=chave,
+                    valor=valor,
+                    descricao=descricao,
+                    tipo_dado=tipo
+                )
+                db.session.add(config)
+                db.session.commit()
+            except Exception as e2:
+                print(f"⚠️ Erro ao inserir configuração manual {chave}: {e2}")
+                continue
 
     print("✅ Configurações padrão do módulo EPI inseridas")
 

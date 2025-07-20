@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Inventário de EPIs - Sistema de Gestão de EPIs{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>
+                    <i class="fas fa-box-open text-primary"></i>
+                    Inventário de EPIs
+                </h2>
+                <p class="text-muted">Gerencie todos os Equipamentos de Proteção Individual cadastrados</p>
+            </div>
+            <div>
+                <a href="{{ url_for('epi.novo_epi') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Cadastrar Novo EPI
+                </a>
+                <a href="{{ url_for('epi.dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Voltar ao Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros e Busca -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="busca" class="form-label">Buscar EPI</label>
+                        <input type="text" class="form-control" id="busca" name="busca"
+                            placeholder="Digite o nome do EPI ou número do CA..."
+                            value="{{ request.args.get('busca', '') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="ordenar" class="form-label">Ordenar por</label>
+                        <select class="form-select" id="ordenar" name="ordenar">
+                            <option value="nome">Nome</option>
+                            <option value="ca">CA</option>
+                            <option value="validade">Validade</option>
+                            <option value="estoque">Estoque</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i>
+                                Buscar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de EPIs -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list"></i>
+                    EPIs Cadastrados ({{ epis|length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if epis %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Nome do EPI</th>
+                                <th>CA</th>
+                                <th>Validade CA</th>
+                                <th>Estoque Atual</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for epi in epis %}
+                            <tr>
+                                <td>
+                                    <strong>{{ epi.nome }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ epi.ca }}</span>
+                                </td>
+                                <td>
+                                    {% if epi.validade_ca %}
+                                    {% set validade = epi.validade_ca %}
+                                    {% if validade is string %}
+                                    {{ validade }}
+                                    {% else %}
+                                    {{ validade.strftime('%d/%m/%Y') if validade.strftime else validade }}
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% set estoque = epi.estoque_atual or 0 %}
+                                    {% if estoque <= 5 %} <span class="badge bg-danger">{{ estoque }}</span>
+                                        <small class="text-danger">Baixo</small>
+                                        {% elif estoque <= 20 %} <span class="badge bg-warning">{{ estoque }}</span>
+                                            <small class="text-warning">Atenção</small>
+                                            {% else %}
+                                            <span class="badge bg-success">{{ estoque }}</span>
+                                            <small class="text-success">OK</small>
+                                            {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">Ativo</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-info"
+                                            onclick="verificarCA('{{ epi.ca|e }}')" title="Verificar CA">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary" title="Editar"
+                                            onclick="editarEPI('{{ epi.id }}')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger" title="Excluir"
+                                            onclick="excluirEPI('{{ epi.id }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-box-open text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3 text-muted">Nenhum EPI encontrado</h4>
+                    <p class="text-muted">Comece cadastrando o primeiro EPI do seu inventário.</p>
+                    <a href="{{ url_for('epi.novo_epi') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Cadastrar Primeiro EPI
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Verificação de CA -->
+<div class="modal fade" id="modalVerificarCA" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-search"></i>
+                    Verificação de CA
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="resultadoCA">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Verificando...</span>
+                        </div>
+                        <p class="mt-2">Verificando CA...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function verificarCA(ca) {
+        // Abrir modal
+        var modal = new bootstrap.Modal(document.getElementById('modalVerificarCA'));
+        modal.show();
+
+        // Reset do conteúdo
+        document.getElementById('resultadoCA').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Verificando...</span>
+            </div>
+            <p class="mt-2">Verificando CA ${ca}...</p>
+        </div>
+    `;
+
+        // Fazer requisição para API
+        fetch(`/epi/api/verificar-ca/${ca}`)
+            .then(response => response.json())
+            .then(data => {
+                let resultado = '';
+
+                if (data.success) {
+                    if (data.situacao === 'Ativo') {
+                        resultado = `
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-check-circle"></i> CA Válido e Ativo</h6>
+                            <p><strong>CA:</strong> ${ca}</p>
+                            <p><strong>Situação:</strong> ${data.situacao}</p>
+                            <p><strong>Validade:</strong> ${data.validade_ca}</p>
+                        </div>
+                    `;
+                    } else if (data.situacao === 'Vencido') {
+                        resultado = `
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-exclamation-triangle"></i> CA Vencido</h6>
+                            <p><strong>CA:</strong> ${ca}</p>
+                            <p><strong>Situação:</strong> ${data.situacao}</p>
+                            <p><strong>Validade:</strong> ${data.validade_ca}</p>
+                        </div>
+                    `;
+                    }
+                } else {
+                    resultado = `
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-question-circle"></i> CA Não Encontrado</h6>
+                        <p><strong>CA:</strong> ${ca}</p>
+                        <p><strong>Situação:</strong> ${data.situacao}</p>
+                        <p>Este CA não foi encontrado na base de dados do MTE.</p>
+                    </div>
+                `;
+                }
+
+                document.getElementById('resultadoCA').innerHTML = resultado;
+            })
+            .catch(error => {
+                document.getElementById('resultadoCA').innerHTML = `
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-times-circle"></i> Erro na Verificação</h6>
+                    <p>Não foi possível verificar o CA no momento.</p>
+                    <p><small>Erro: ${error.message}</small></p>
+                </div>
+            `;
+            });
+    }
+
+    function editarEPI(id) {
+        // Implementar futuramente
+        alert('Função de editar será implementada em breve!');
+    }
+
+    function excluirEPI(id) {
+        if (confirm('Tem certeza que deseja excluir este EPI?')) {
+            // Implementar futuramente
+            alert('Função de excluir será implementada em breve!');
+        }
+    }
+
+    $(document).ready(function () {
+        // Auto-submit no campo de busca
+        $('#busca').on('input', function () {
+            clearTimeout(window.buscaTimeout);
+            window.buscaTimeout = setTimeout(function () {
+                if ($('#busca').val().length >= 3 || $('#busca').val().length === 0) {
+                    $('form').submit();
+                }
+            }, 500);
+        });
+    });
+</script>
+{% endblock %}

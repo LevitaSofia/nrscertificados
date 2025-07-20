@@ -1,0 +1,842 @@
+{% extends "base.html" %}
+
+{% block title %}Configurações EPI - Sistema de Gestão de EPIs{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>
+                    <i class="fas fa-cogs text-primary"></i>
+                    Configurações do Sistema EPI
+                </h2>
+                <p class="text-muted">Configurar alertas, notificações e parâmetros do sistema</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Abas de Configuração -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="configTabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="alertas-tab" data-bs-toggle="tab" href="#alertas">
+                            <i class="fas fa-bell"></i>
+                            Alertas e Notificações
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="parametros-tab" data-bs-toggle="tab" href="#parametros">
+                            <i class="fas fa-sliders-h"></i>
+                            Parâmetros Gerais
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="integracao-tab" data-bs-toggle="tab" href="#integracao">
+                            <i class="fas fa-plug"></i>
+                            Integrações
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="backup-tab" data-bs-toggle="tab" href="#backup">
+                            <i class="fas fa-download"></i>
+                            Backup & Dados
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="configTabContent">
+
+                    <!-- Aba Alertas e Notificações -->
+                    <div class="tab-pane fade show active" id="alertas">
+                        <form id="formAlertas">
+                            <div class="row g-4">
+
+                                <!-- Alertas de Estoque -->
+                                <div class="col-12">
+                                    <div class="card border-warning">
+                                        <div class="card-header bg-warning text-dark">
+                                            <h6 class="card-title mb-0">
+                                                <i class="fas fa-boxes"></i>
+                                                Alertas de Estoque
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-4">
+                                                    <label for="estoque_minimo_global" class="form-label">Estoque Mínimo
+                                                        Global:</label>
+                                                    <input type="number" class="form-control" id="estoque_minimo_global"
+                                                        name="estoque_minimo_global" value="5" min="1">
+                                                    <div class="form-text">Valor padrão para novos EPIs</div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="dias_alerta_estoque" class="form-label">Frequência de
+                                                        Alerta (dias):</label>
+                                                    <select class="form-select" id="dias_alerta_estoque"
+                                                        name="dias_alerta_estoque">
+                                                        <option value="1">Diário</option>
+                                                        <option value="3" selected>A cada 3 dias</option>
+                                                        <option value="7">Semanal</option>
+                                                        <option value="15">Quinzenal</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check mt-4">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            id="ativo_alerta_estoque" name="ativo_alerta_estoque"
+                                                            checked>
+                                                        <label class="form-check-label" for="ativo_alerta_estoque">
+                                                            Alertas de estoque ativos
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Alertas de Vencimento de CA -->
+                                <div class="col-12">
+                                    <div class="card border-danger">
+                                        <div class="card-header bg-danger text-white">
+                                            <h6 class="card-title mb-0">
+                                                <i class="fas fa-calendar-times"></i>
+                                                Alertas de Vencimento de CA
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-3">
+                                                    <label for="dias_alerta_ca_critico" class="form-label">Alerta
+                                                        Crítico (dias):</label>
+                                                    <input type="number" class="form-control"
+                                                        id="dias_alerta_ca_critico" name="dias_alerta_ca_critico"
+                                                        value="30" min="1">
+                                                    <div class="form-text">CA vence em menos de X dias</div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label for="dias_alerta_ca_atencao" class="form-label">Alerta de
+                                                        Atenção (dias):</label>
+                                                    <input type="number" class="form-control"
+                                                        id="dias_alerta_ca_atencao" name="dias_alerta_ca_atencao"
+                                                        value="90" min="1">
+                                                    <div class="form-text">CA vence em menos de X dias</div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label for="frequencia_alerta_ca" class="form-label">Frequência de
+                                                        Verificação:</label>
+                                                    <select class="form-select" id="frequencia_alerta_ca"
+                                                        name="frequencia_alerta_ca">
+                                                        <option value="1">Diário</option>
+                                                        <option value="7" selected>Semanal</option>
+                                                        <option value="15">Quinzenal</option>
+                                                        <option value="30">Mensal</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-check mt-4">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            id="ativo_alerta_ca" name="ativo_alerta_ca" checked>
+                                                        <label class="form-check-label" for="ativo_alerta_ca">
+                                                            Alertas de CA ativos
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Notificações por Email -->
+                                <div class="col-12">
+                                    <div class="card border-info">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="card-title mb-0">
+                                                <i class="fas fa-envelope"></i>
+                                                Notificações por Email
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="email_responsavel" class="form-label">Email do
+                                                        Responsável:</label>
+                                                    <input type="email" class="form-control" id="email_responsavel"
+                                                        name="email_responsavel" placeholder="seguranca@empresa.com">
+                                                    <div class="form-text">Email principal para receber alertas</div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="emails_copia" class="form-label">Emails em
+                                                        Cópia:</label>
+                                                    <input type="text" class="form-control" id="emails_copia"
+                                                        name="emails_copia"
+                                                        placeholder="email1@empresa.com, email2@empresa.com">
+                                                    <div class="form-text">Separar múltiplos emails por vírgula</div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            id="email_estoque" name="email_estoque" checked>
+                                                        <label class="form-check-label" for="email_estoque">
+                                                            Alertas de estoque por email
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            id="email_vencimento" name="email_vencimento" checked>
+                                                        <label class="form-check-label" for="email_vencimento">
+                                                            Alertas de vencimento por email
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            id="email_entregas" name="email_entregas">
+                                                        <label class="form-check-label" for="email_entregas">
+                                                            Resumo semanal de entregas
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Aba Parâmetros Gerais -->
+                    <div class="tab-pane fade" id="parametros">
+                        <form id="formParametros">
+                            <div class="row g-4">
+
+                                <!-- Configurações de Sistema -->
+                                <div class="col-md-6">
+                                    <div class="card border-primary">
+                                        <div class="card-header bg-primary text-white">
+                                            <h6 class="card-title mb-0">
+                                                <i class="fas fa-cog"></i>
+                                                Configurações de Sistema
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="nome_empresa" class="form-label">Nome da Empresa:</label>
+                                                <input type="text" class="form-control" id="nome_empresa"
+                                                    name="nome_empresa" value="Minha Empresa Ltda">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="cnpj_empresa" class="form-label">CNPJ:</label>
+                                                <input type="text" class="form-control" id="cnpj_empresa"
+                                                    name="cnpj_empresa" placeholder="00.000.000/0000-00">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="responsavel_sistema" class="form-label">Responsável pelo
+                                                    Sistema:</label>
+                                                <input type="text" class="form-control" id="responsavel_sistema"
+                                                    name="responsavel_sistema" placeholder="Nome do responsável">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="cargo_responsavel" class="form-label">Cargo do
+                                                    Responsável:</label>
+                                                <input type="text" class="form-control" id="cargo_responsavel"
+                                                    name="cargo_responsavel" placeholder="Ex: Técnico de Segurança">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Configurações de Funcionamento -->
+                                <div class="col-md-6">
+                                    <div class="card border-success">
+                                        <div class="card-header bg-success text-white">
+                                            <h6 class="card-title mb-0">
+                                                <i class="fas fa-tools"></i>
+                                                Configurações de Funcionamento
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="validade_padrao_entrega" class="form-label">Validade Padrão
+                                                    de Entrega (meses):</label>
+                                                <input type="number" class="form-control" id="validade_padrao_entrega"
+                                                    name="validade_padrao_entrega" value="12" min="1" max="60">
+                                                <div class="form-text">Tempo padrão para substituição do EPI</div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="max_entregas_funcionario" class="form-label">Máximo de EPIs
+                                                    por Funcionário:</label>
+                                                <input type="number" class="form-control" id="max_entregas_funcionario"
+                                                    name="max_entregas_funcionario" value="10" min="1">
+                                                <div class="form-text">Limite de EPIs não devolvidos por funcionário
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="exigir_assinatura" name="exigir_assinatura" checked>
+                                                    <label class="form-check-label" for="exigir_assinatura">
+                                                        Exigir declaração assinada na entrega
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="verificar_ca_automatico" name="verificar_ca_automatico"
+                                                        checked>
+                                                    <label class="form-check-label" for="verificar_ca_automatico">
+                                                        Verificar CA automaticamente no cadastro
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="log_atividades"
+                                                        name="log_atividades" checked>
+                                                    <label class="form-check-label" for="log_atividades">
+                                                        Registrar log de atividades
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Aba Integrações -->
+                    <div class="tab-pane fade" id="integracao">
+                        <form id="formIntegracao">
+                            <div class="row g-4">
+
+                                <!-- API de Verificação de CA -->
+                                <div class="col-12">
+                                    <div class="card border-warning">
+                                        <div class="card-header bg-warning text-dark">
+                                            <h6 class="card-title mb-0">
+                                                <i class="fas fa-certificate"></i>
+                                                API de Verificação de CA
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-8">
+                                                    <label for="url_api_ca" class="form-label">URL da API:</label>
+                                                    <input type="url" class="form-control" id="url_api_ca"
+                                                        name="url_api_ca" value="https://caepi.mte.gov.br/api/ca/"
+                                                        placeholder="https://api-ca-exemplo.com/">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="timeout_api_ca" class="form-label">Timeout
+                                                        (segundos):</label>
+                                                    <input type="number" class="form-control" id="timeout_api_ca"
+                                                        name="timeout_api_ca" value="10" min="5" max="60">
+                                                </div>
+                                                <div class="col-12">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            id="ativo_api_ca" name="ativo_api_ca" checked>
+                                                        <label class="form-check-label" for="ativo_api_ca">
+                                                            Verificação de CA ativa
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12">
+                                                    <button type="button" class="btn btn-outline-primary btn-sm"
+                                                        onclick="testarApiCA()">
+                                                        <i class="fas fa-vial"></i>
+                                                        Testar Conexão
+                                                    </button>
+                                                    <span id="resultadoTesteCA" class="ms-2"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Configurações de Email -->
+                                <div class="col-12">
+                                    <div class="card border-info">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="card-title mb-0">
+                                                <i class="fas fa-mail-bulk"></i>
+                                                Servidor de Email (SMTP)
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="smtp_servidor" class="form-label">Servidor SMTP:</label>
+                                                    <input type="text" class="form-control" id="smtp_servidor"
+                                                        name="smtp_servidor" placeholder="smtp.gmail.com">
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label for="smtp_porta" class="form-label">Porta:</label>
+                                                    <input type="number" class="form-control" id="smtp_porta"
+                                                        name="smtp_porta" value="587">
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-check mt-4">
+                                                        <input class="form-check-input" type="checkbox" id="smtp_tls"
+                                                            name="smtp_tls" checked>
+                                                        <label class="form-check-label" for="smtp_tls">
+                                                            Usar TLS/SSL
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="smtp_usuario" class="form-label">Usuário:</label>
+                                                    <input type="email" class="form-control" id="smtp_usuario"
+                                                        name="smtp_usuario" placeholder="usuario@gmail.com">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="smtp_senha" class="form-label">Senha:</label>
+                                                    <input type="password" class="form-control" id="smtp_senha"
+                                                        name="smtp_senha" placeholder="••••••••">
+                                                    <div class="form-text">Senha ou token de aplicativo</div>
+                                                </div>
+                                                <div class="col-12">
+                                                    <button type="button" class="btn btn-outline-info btn-sm"
+                                                        onclick="testarEmail()">
+                                                        <i class="fas fa-paper-plane"></i>
+                                                        Enviar Email de Teste
+                                                    </button>
+                                                    <span id="resultadoTesteEmail" class="ms-2"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Aba Backup & Dados -->
+                    <div class="tab-pane fade" id="backup">
+                        <div class="row g-4">
+
+                            <!-- Backup de Dados -->
+                            <div class="col-md-6">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-download"></i>
+                                            Backup de Dados
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">Faça backup dos dados do sistema EPI para segurança.</p>
+                                        <div class="d-grid gap-2">
+                                            <button type="button" class="btn btn-success" onclick="gerarBackup()">
+                                                <i class="fas fa-download"></i>
+                                                Gerar Backup Completo
+                                            </button>
+                                            <button type="button" class="btn btn-outline-success"
+                                                onclick="gerarBackupParcial()">
+                                                <i class="fas fa-database"></i>
+                                                Backup Apenas Dados
+                                            </button>
+                                        </div>
+                                        <hr>
+                                        <h6>Último Backup:</h6>
+                                        <p class="text-muted" id="ultimoBackup">Nunca realizado</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Restaurar Dados -->
+                            <div class="col-md-6">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-upload"></i>
+                                            Restaurar Dados
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">Restaure dados de um backup anterior.</p>
+                                        <div class="mb-3">
+                                            <label for="arquivoBackup" class="form-label">Arquivo de Backup:</label>
+                                            <input type="file" class="form-control" id="arquivoBackup"
+                                                accept=".sql,.zip">
+                                        </div>
+                                        <div class="d-grid gap-2">
+                                            <button type="button" class="btn btn-warning" onclick="restaurarBackup()">
+                                                <i class="fas fa-upload"></i>
+                                                Restaurar Backup
+                                            </button>
+                                        </div>
+                                        <div class="alert alert-danger mt-3">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <strong>Atenção!</strong> Esta operação substitui todos os dados atuais.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Exportar Dados -->
+                            <div class="col-md-6">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-file-export"></i>
+                                            Exportar Dados
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">Exporte dados para diferentes formatos.</p>
+                                        <div class="d-grid gap-2">
+                                            <button type="button" class="btn btn-info" onclick="exportarExcel()">
+                                                <i class="fas fa-file-excel"></i>
+                                                Exportar para Excel
+                                            </button>
+                                            <button type="button" class="btn btn-outline-info" onclick="exportarCSV()">
+                                                <i class="fas fa-file-csv"></i>
+                                                Exportar para CSV
+                                            </button>
+                                            <button type="button" class="btn btn-outline-info" onclick="exportarPDF()">
+                                                <i class="fas fa-file-pdf"></i>
+                                                Relatório Completo PDF
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Importar Dados -->
+                            <div class="col-md-6">
+                                <div class="card border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-file-import"></i>
+                                            Importar Dados
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">Importe dados de planilhas externas.</p>
+                                        <div class="mb-3">
+                                            <label for="arquivoImportacao" class="form-label">Arquivo de Dados:</label>
+                                            <input type="file" class="form-control" id="arquivoImportacao"
+                                                accept=".xlsx,.csv">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="tipoImportacao" class="form-label">Tipo de Dados:</label>
+                                            <select class="form-select" id="tipoImportacao">
+                                                <option value="epis">EPIs</option>
+                                                <option value="funcionarios">Funcionários</option>
+                                                <option value="entregas">Entregas</option>
+                                            </select>
+                                        </div>
+                                        <div class="d-grid gap-2">
+                                            <button type="button" class="btn btn-primary" onclick="importarDados()">
+                                                <i class="fas fa-upload"></i>
+                                                Importar Dados
+                                            </button>
+                                            <a href="/epi/api/modelo-importacao" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-download"></i>
+                                                Baixar Modelo
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-secondary" onclick="restaurarPadroes()">
+                                <i class="fas fa-undo"></i>
+                                Restaurar Padrões
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="salvarConfiguracoes()">
+                                <i class="fas fa-save"></i>
+                                Salvar Configurações
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        // Carregar configurações atuais
+        carregarConfiguracoes();
+
+        // Verificar último backup
+        verificarUltimoBackup();
+    });
+
+    function carregarConfiguracoes() {
+        fetch('/epi/api/configuracoes')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Preencher formulários com os dados
+                    preencherFormularios(data.configuracoes);
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar configurações:', error);
+            });
+    }
+
+    function preencherFormularios(config) {
+        // Preencher campos dos formulários
+        Object.keys(config).forEach(key => {
+            const element = document.getElementById(key);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    element.checked = config[key];
+                } else {
+                    element.value = config[key];
+                }
+            }
+        });
+    }
+
+    function salvarConfiguracoes() {
+        const configuracoes = {};
+
+        // Coletar dados de todos os formulários
+        ['formAlertas', 'formParametros', 'formIntegracao'].forEach(formId => {
+            const form = document.getElementById(formId);
+            if (form) {
+                const formData = new FormData(form);
+                for (let [key, value] of formData.entries()) {
+                    configuracoes[key] = value;
+                }
+            }
+        });
+
+        // Processar checkboxes (que não aparecem no FormData quando desmarcados)
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            configuracoes[checkbox.name] = checkbox.checked;
+        });
+
+        fetch('/epi/api/configuracoes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(configuracoes)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Configurações salvas com sucesso!');
+                } else {
+                    alert('Erro ao salvar configurações: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Erro ao salvar configurações!');
+                console.error(error);
+            });
+    }
+
+    function restaurarPadroes() {
+        if (confirm('Tem certeza que deseja restaurar as configurações padrão? Esta ação não pode ser desfeita.')) {
+            fetch('/epi/api/configuracoes-padrao', {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Configurações padrão restauradas!');
+                        location.reload();
+                    } else {
+                        alert('Erro ao restaurar configurações padrão!');
+                    }
+                });
+        }
+    }
+
+    function testarApiCA() {
+        const url = document.getElementById('url_api_ca').value;
+        const timeout = document.getElementById('timeout_api_ca').value;
+        const resultado = document.getElementById('resultadoTesteCA');
+
+        resultado.innerHTML = '<i class="fas fa-spinner fa-spin text-primary"></i> Testando...';
+
+        fetch('/epi/api/testar-api-ca', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url: url, timeout: timeout })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resultado.innerHTML = '<i class="fas fa-check text-success"></i> Conexão OK';
+                } else {
+                    resultado.innerHTML = '<i class="fas fa-times text-danger"></i> Erro: ' + data.message;
+                }
+            })
+            .catch(error => {
+                resultado.innerHTML = '<i class="fas fa-times text-danger"></i> Erro na conexão';
+            });
+    }
+
+    function testarEmail() {
+        const config = {
+            servidor: document.getElementById('smtp_servidor').value,
+            porta: document.getElementById('smtp_porta').value,
+            usuario: document.getElementById('smtp_usuario').value,
+            senha: document.getElementById('smtp_senha').value,
+            tls: document.getElementById('smtp_tls').checked
+        };
+
+        const resultado = document.getElementById('resultadoTesteEmail');
+        resultado.innerHTML = '<i class="fas fa-spinner fa-spin text-primary"></i> Enviando...';
+
+        fetch('/epi/api/testar-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(config)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resultado.innerHTML = '<i class="fas fa-check text-success"></i> Email enviado!';
+                } else {
+                    resultado.innerHTML = '<i class="fas fa-times text-danger"></i> Erro: ' + data.message;
+                }
+            })
+            .catch(error => {
+                resultado.innerHTML = '<i class="fas fa-times text-danger"></i> Erro no envio';
+            });
+    }
+
+    function gerarBackup() {
+        if (confirm('Gerar backup completo do sistema EPI?')) {
+            window.open('/epi/api/backup-completo', '_blank');
+        }
+    }
+
+    function gerarBackupParcial() {
+        if (confirm('Gerar backup apenas dos dados?')) {
+            window.open('/epi/api/backup-dados', '_blank');
+        }
+    }
+
+    function restaurarBackup() {
+        const arquivo = document.getElementById('arquivoBackup').files[0];
+
+        if (!arquivo) {
+            alert('Selecione um arquivo de backup!');
+            return;
+        }
+
+        if (!confirm('ATENÇÃO: Esta operação irá substituir todos os dados atuais. Deseja continuar?')) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('backup', arquivo);
+
+        fetch('/epi/api/restaurar-backup', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Backup restaurado com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro ao restaurar backup: ' + data.message);
+                }
+            });
+    }
+
+    function exportarExcel() {
+        window.open('/epi/api/exportar-excel', '_blank');
+    }
+
+    function exportarCSV() {
+        window.open('/epi/api/exportar-csv', '_blank');
+    }
+
+    function exportarPDF() {
+        window.open('/epi/api/relatorio-completo-pdf', '_blank');
+    }
+
+    function importarDados() {
+        const arquivo = document.getElementById('arquivoImportacao').files[0];
+        const tipo = document.getElementById('tipoImportacao').value;
+
+        if (!arquivo) {
+            alert('Selecione um arquivo para importar!');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('arquivo', arquivo);
+        formData.append('tipo', tipo);
+
+        fetch('/epi/api/importar-dados', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Importação concluída!\nRegistros importados: ${data.importados}\nErros: ${data.erros}`);
+                } else {
+                    alert('Erro na importação: ' + data.message);
+                }
+            });
+    }
+
+    function verificarUltimoBackup() {
+        fetch('/epi/api/ultimo-backup')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.ultimo_backup) {
+                    document.getElementById('ultimoBackup').textContent =
+                        new Date(data.ultimo_backup).toLocaleString('pt-BR');
+                }
+            });
+    }
+
+    // Máscara para CNPJ
+    document.getElementById('cnpj_empresa').addEventListener('input', function (e) {
+        let value = e.target.value.replace(/\D/g, '');
+        value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+        value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+        value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+        value = value.replace(/(\d{4})(\d)/, '$1-$2');
+        e.target.value = value;
+    });
+</script>
+{% endblock %}

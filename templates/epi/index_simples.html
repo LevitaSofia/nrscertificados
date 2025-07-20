@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Gestão de EPIs - Sistema de Certificados NR{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-hard-hat me-2"></i>Sistema de Gestão de EPIs</h2>
+                <a href="/" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar ao Menu Principal
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Card Cadastro de EPIs -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-plus-circle text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title">Cadastro de EPIs</h5>
+                    <p class="card-text">Cadastre e gerencie equipamentos de proteção</p>
+                    <div class="d-grid">
+                        <a href="/epi/cadastro" class="btn btn-primary">Acessar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Entregas -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-handshake text-success" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title">Entregas</h5>
+                    <p class="card-text">Controle de entrega e devolução de EPIs</p>
+                    <div class="d-grid">
+                        <a href="/epi/entregas" class="btn btn-success">Acessar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Relatórios -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-chart-bar text-info" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title">Relatórios</h5>
+                    <p class="card-text">Relatórios de estoque e validades</p>
+                    <div class="d-grid">
+                        <a href="/epi/relatorios" class="btn btn-info">Acessar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Configurações -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-cog text-warning" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title">Configurações</h5>
+                    <p class="card-text">Configurações do sistema de EPIs</p>
+                    <div class="d-grid">
+                        <a href="/epi/configuracoes" class="btn btn-warning">Acessar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas rápidas -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Estatísticas Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <h3 class="text-primary">0</h3>
+                                <p class="mb-0">EPIs Cadastrados</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <h3 class="text-success">0</h3>
+                                <p class="mb-0">Em Estoque</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <h3 class="text-warning">0</h3>
+                                <p class="mb-0">CA Vencendo</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <h3 class="text-info">0</h3>
+                                <p class="mb-0">Entregas Ativas</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

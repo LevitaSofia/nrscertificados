@@ -1,7 +1,14 @@
 import os
 import re
 import subprocess
-import comtypes.client
+try:
+    import comtypes.client
+except ImportError:
+    comtypes = None
+try:
+    import win32com.client
+except ImportError:
+    win32com = None
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify, Response, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -262,44 +269,52 @@ def validar_cpf(cpf):
 # Função para converter PowerPoint para PDF
 def converter_pptx_para_pdf(caminho_pptx, caminho_pdf):
     try:
-        print(f"Tentando converter: {caminho_pptx} -> {caminho_pdf}")
-
         # Método 1: Tentar usar COM (PowerPoint)
+        print(f"Tentando converter: {caminho_pptx} -> {caminho_pdf}")
         try:
-            import comtypes.client
+            if comtypes:
+                # Criar aplicação PowerPoint
+                powerpoint = comtypes.client.CreateObject(
+                    "Powerpoint.Application")
+                powerpoint.Visible = False  # Executar em background
 
-            # Criar aplicação PowerPoint
-            powerpoint = comtypes.client.CreateObject("Powerpoint.Application")
-            powerpoint.Visible = False  # Executar em background
+                # Abrir apresentação
+                presentation = powerpoint.Presentations.Open(
+                    os.path.abspath(caminho_pptx))
 
-            # Abrir apresentação
-            presentation = powerpoint.Presentations.Open(
-                os.path.abspath(caminho_pptx))
+                # Salvar como PDF
+                presentation.SaveAs(os.path.abspath(
+                    caminho_pdf), 32)  # 32 = ppSaveAsPDF
 
-            # Salvar como PDF
-            presentation.SaveAs(os.path.abspath(
-                caminho_pdf), 32)  # 32 = ppSaveAsPDF
+                # Fechar apresentação e PowerPoint
+                presentation.Close()
+                powerpoint.Quit()
 
-            # Fechar apresentação e PowerPoint
-            presentation.Close()
-            powerpoint.Quit()
-
-            print("Conversão COM bem-sucedida!")
-            return True
+                print("Conversão COM bem-sucedida!")
+                return True
+            else:
+                raise Exception("comtypes não disponível")
 
         except Exception as com_error:
             print(f"Erro COM: {str(com_error)}")
 
             # Método 2: Tentar usar win32com como alternativa
             try:
-                import win32com.client
+                if win32com:
+                    powerpoint = win32com.client.Dispatch(
+                        "PowerPoint.Application")
+                    powerpoint.Visible = 0  # Não mostrar PowerPoint
 
-                powerpoint = win32com.client.Dispatch("PowerPoint.Application")
-                powerpoint.Visible = 0  # Não mostrar PowerPoint
+                    presentation = powerpoint.Presentations.Open(
+                        os.path.abspath(caminho_pptx))
+                    presentation.SaveAs(os.path.abspath(caminho_pdf), 32)
+                    presentation.Close()
+                    powerpoint.Quit()
 
-                presentation = powerpoint.Presentations.Open(
-                    os.path.abspath(caminho_pptx))
-                presentation.SaveAs(os.path.abspath(caminho_pdf), 32)
+                    print("Conversão win32com bem-sucedida!")
+                    return True
+                else:
+                    raise Exception("win32com não disponível")
                 presentation.Close()
                 powerpoint.Quit()
 
@@ -467,14 +482,38 @@ def gerar_certificado(funcionario, tipo_nr, tipo_treinamento, data_emissao):
         print(f"❌ Erro ao gerar certificado: {str(e)}")
         return False, f"Erro ao gerar certificado: {str(e)}"
 
+
+# Inicialização do módulo EPI FINAL
+# Esta inicialização deve acontecer depois dos modelos e antes das rotas
+with app.app_context():
+    from integracao_epi_final import inicializar_epi
+    inicializar_epi(app)
+
 # Rotas
 
 
 @app.route('/')
 def index():
+    """Página principal do sistema"""
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+
     funcionarios = Funcionario.query.all()
     modelos = ModeloNR.query.all()
-    return render_template('index.html', funcionarios=funcionarios, modelos=modelos)
+    total_certificados = CertificadoGerado.query.count()
+
+    # Estatísticas rápidas
+    stats = {
+        'total_funcionarios': len(funcionarios),
+        'total_modelos': len(modelos),
+        'total_certificados': total_certificados,
+        'funcionarios_ativos': len([f for f in funcionarios if f.ativo])
+    }
+
+    return render_template('index.html',
+                           funcionarios=funcionarios,
+                           modelos=modelos,
+                           stats=stats)
 
 
 @app.route('/funcionarios')
@@ -943,14 +982,19 @@ def excluir_treinamento(treinamento_id):
             treinamento_id=treinamento_id).count()
 
         if progresso_count > 0:
-            # Desativar ao invés de excluir se há progresso
+            # Se há progresso, apenas desativar
             treinamento.ativo = False
             flash(
-                f'Treinamento "{treinamento.titulo}" foi desativado (há progresso de funcionários).', 'warning')
+                f'Treinamento "{treinamento.titulo}" desativado pois há {progresso_count} registros de progresso.', 'warning')
         else:
-            # Excluir arquivo e registro se não há progresso
-            if os.path.exists(treinamento.arquivo_video):
-                os.remove(treinamento.arquivo_video)
+            # Se não há progresso, excluir físicamente
+            try:
+                # Tentar excluir o arquivo de vídeo
+                if os.path.exists(treinamento.arquivo_video):
+                    os.remove(treinamento.arquivo_video)
+            except Exception as e:
+                print(f"Erro ao excluir arquivo de vídeo: {str(e)}")
+
             db.session.delete(treinamento)
             flash(
                 f'Treinamento "{treinamento.titulo}" excluído com sucesso!', 'success')
@@ -1011,60 +1055,39 @@ def assistir_treinamento(treinamento_id):
 def atualizar_progresso(treinamento_id):
     """API para atualizar progresso de visualização"""
     try:
+        dados = request.get_json()
         funcionario_id = 1  # TEMPORÁRIO - substituir por sessão real
-        tempo_assistido = request.json.get('tempo_assistido', 0)
-        progresso_percent = request.json.get('progresso_percent', 0)
+        tempo_atual = dados.get('tempo_atual', 0)
+        progresso_percent = dados.get('progresso_percent', 0)
 
+        # Buscar ou criar registro de progresso
         progresso = ProgressoTreinamento.query.filter_by(
             funcionario_id=funcionario_id,
             treinamento_id=treinamento_id
         ).first()
 
-        if progresso:
-            progresso.tempo_assistido_segundos = tempo_assistido
-            progresso.progresso_percent = progresso_percent
-            progresso.data_ultima_visualizacao = datetime.now()
+        if not progresso:
+            progresso = ProgressoTreinamento(
+                funcionario_id=funcionario_id,
+                treinamento_id=treinamento_id
+            )
+            db.session.add(progresso)
 
-            # Marcar como concluído se progresso >= 90%
-            if progresso_percent >= 90 and not progresso.concluido:
-                progresso.concluido = True
-                progresso.data_conclusao = datetime.now()
+        # Atualizar progresso
+        progresso.tempo_assistido_segundos = tempo_atual
+        progresso.progresso_percent = progresso_percent
+        progresso.data_ultima_visualizacao = datetime.now()
 
-                # Verificar se existe avaliação para este treinamento
-                avaliacao = Avaliacao.query.filter_by(
-                    treinamento_id=treinamento_id,
-                    ativo=True
-                ).first()
+        # Marcar como concluído se progresso for 100%
+        if progresso_percent >= 100:
+            progresso.concluido = True
+            progresso.data_conclusao = datetime.now()
 
-                tem_avaliacao = avaliacao is not None
-
-                # Verificar se já fez a avaliação
-                ja_fez_avaliacao = False
-                if avaliacao:
-                    resultado_existente = ResultadoAvaliacao.query.filter_by(
-                        funcionario_id=funcionario_id,
-                        avaliacao_id=avaliacao.id
-                    ).first()
-                    ja_fez_avaliacao = resultado_existente is not None
-
-                db.session.commit()
-
-                return jsonify({
-                    'status': 'success',
-                    'concluido': True,
-                    'tem_avaliacao': tem_avaliacao,
-                    'ja_fez_avaliacao': ja_fez_avaliacao,
-                    'url_avaliacao': url_for('avaliacao_treinamento', treinamento_id=treinamento_id) if tem_avaliacao and not ja_fez_avaliacao else None
-                })
-
-            db.session.commit()
-
-            return jsonify({'status': 'success', 'concluido': progresso.concluido})
-
-        return jsonify({'status': 'error', 'message': 'Progresso não encontrado'})
+        db.session.commit()
+        return jsonify({'status': 'success'})
 
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 @app.route('/importar_funcionarios', methods=['POST'])
@@ -1492,12 +1515,7 @@ def criar_tabelas():
 
     for modelo_info in modelos_padrao:
         if not ModeloNR.query.filter_by(tipo_nr=modelo_info['tipo_nr']).first():
-            modelo = ModeloNR(
-                tipo_nr=modelo_info['tipo_nr'],
-                caminho_modelo_pptx=f"modelos_nr/{modelo_info['tipo_nr']}_modelo.pptx",
-                descricao=modelo_info['descricao']
-            )
-            db.session.add(modelo)
+            pass
 
     # Criar cargos padrão se não existirem
     cargos_padrao = [
@@ -1516,128 +1534,15 @@ def criar_tabelas():
     ]
 
     for cargo_info in cargos_padrao:
-        if not Cargo.query.filter_by(nome=cargo_info['nome'], ativo=True).first():
-            cargo = Cargo(
-                nome=cargo_info['nome'],
-                descricao=cargo_info['descricao']
-            )
-            db.session.add(cargo)
+        pass
 
     # Criar avaliações de exemplo se não existirem
     treinamento_nr06 = Treinamento.query.filter_by(tipo_nr='NR06').first()
     if treinamento_nr06:
-        avaliacao_existente = Avaliacao.query.filter_by(
-            treinamento_id=treinamento_nr06.id).first()
-        if not avaliacao_existente:
-            # Criar avaliação para NR06
-            avaliacao_nr06 = Avaliacao(
-                treinamento_id=treinamento_nr06.id,
-                titulo='Avaliação NR06 - Equipamentos de Proteção Individual',
-                descricao='Teste seus conhecimentos sobre EPIs e sua importância na segurança do trabalho.',
-                nota_minima_aprovacao=7.0
-            )
-            db.session.add(avaliacao_nr06)
-            db.session.flush()  # Para obter o ID
-
-            # Perguntas da avaliação NR06
-            perguntas_nr06 = [
-                {
-                    'texto': 'O que significa EPI?',
-                    'ordem': 1,
-                    'pontos': 2.0,
-                    'opcoes': [
-                        {'texto': 'Equipamento de Proteção Individual',
-                            'correta': True, 'ordem': 1},
-                        {'texto': 'Equipamento de Prevenção Individual',
-                            'correta': False, 'ordem': 2},
-                        {'texto': 'Equipamento de Proteção Integral',
-                            'correta': False, 'ordem': 3},
-                        {'texto': 'Equipamento de Prevenção Integral',
-                            'correta': False, 'ordem': 4}
-                    ]
-                },
-                {
-                    'texto': 'Quando o EPI deve ser utilizado?',
-                    'ordem': 2,
-                    'pontos': 2.0,
-                    'opcoes': [
-                        {'texto': 'Apenas quando há risco iminente',
-                            'correta': False, 'ordem': 1},
-                        {'texto': 'Sempre que houver risco que não possa ser eliminado',
-                            'correta': True, 'ordem': 2},
-                        {'texto': 'Somente quando solicitado pelo supervisor',
-                            'correta': False, 'ordem': 3},
-                        {'texto': 'Apenas em caso de emergência',
-                            'correta': False, 'ordem': 4}
-                    ]
-                },
-                {
-                    'texto': 'Quem é responsável por fornecer o EPI adequado?',
-                    'ordem': 3,
-                    'pontos': 2.0,
-                    'opcoes': [
-                        {'texto': 'O próprio trabalhador',
-                            'correta': False, 'ordem': 1},
-                        {'texto': 'O empregador', 'correta': True, 'ordem': 2},
-                        {'texto': 'O sindicato', 'correta': False, 'ordem': 3},
-                        {'texto': 'O governo', 'correta': False, 'ordem': 4}
-                    ]
-                },
-                {
-                    'texto': 'O que fazer se o EPI estiver danificado?',
-                    'ordem': 4,
-                    'pontos': 2.0,
-                    'opcoes': [
-                        {'texto': 'Continuar usando normalmente',
-                            'correta': False, 'ordem': 1},
-                        {'texto': 'Tentar consertá-lo',
-                            'correta': False, 'ordem': 2},
-                        {'texto': 'Comunicar imediatamente e solicitar substituição',
-                            'correta': True, 'ordem': 3},
-                        {'texto': 'Usar apenas em casos extremos',
-                            'correta': False, 'ordem': 4}
-                    ]
-                },
-                {
-                    'texto': 'Qual a principal finalidade do capacete de segurança?',
-                    'ordem': 5,
-                    'pontos': 2.0,
-                    'opcoes': [
-                        {'texto': 'Proteger contra o sol',
-                            'correta': False, 'ordem': 1},
-                        {'texto': 'Proteger contra impactos na cabeça',
-                            'correta': True, 'ordem': 2},
-                        {'texto': 'Identificar o trabalhador',
-                            'correta': False, 'ordem': 3},
-                        {'texto': 'Melhorar a aparência',
-                            'correta': False, 'ordem': 4}
-                    ]
-                }
-            ]
-
-            for pergunta_data in perguntas_nr06:
-                pergunta = PerguntaAvaliacao(
-                    avaliacao_id=avaliacao_nr06.id,
-                    texto_pergunta=pergunta_data['texto'],
-                    ordem=pergunta_data['ordem'],
-                    pontos=pergunta_data['pontos']
-                )
-                db.session.add(pergunta)
-                db.session.flush()
-
-                for opcao_data in pergunta_data['opcoes']:
-                    opcao = OpcaoResposta(
-                        pergunta_id=pergunta.id,
-                        texto_opcao=opcao_data['texto'],
-                        correta=opcao_data['correta'],
-                        ordem=opcao_data['ordem']
-                    )
-                    db.session.add(opcao)
-
-    db.session.commit()
-
+        pass
 
 # ==================== ROTA PARA SERVIR VÍDEOS ====================
+
 
 @app.route('/video/<path:filename>')
 def serve_video(filename):
@@ -1954,9 +1859,9 @@ def login():
 
 
 @app.route('/logout')
-@login_required
 def logout():
     """Logout do usuário"""
+
     logout_user()
     flash('Você foi desconectado com sucesso.', 'info')
     return redirect(url_for('login'))
@@ -1980,6 +1885,7 @@ def alterar_senha():
         else:
             current_user.set_password(nova_senha)
             current_user.primeiro_login = False
+
             db.session.commit()
             flash('Senha alterada com sucesso!', 'success')
             return redirect(url_for('index'))
@@ -2067,7 +1973,7 @@ def nr01_certificado(funcionario_id):
     dados_funcionario = {
         'nome': funcionario.nome,
         'cpf': funcionario.cpf_formatado,
-        'cargo': funcionario.funcao if funcionario.funcao else 'AJUDANTE DE INSTALADOR DE TELAS',
+        'cargo': funcionario.funcao if funcionario.funcao else 'AJUDANTE DE INSTALAADOR DE TELAS',
         'data_admissao': funcionario.data_admissao.strftime('%d/%m/%Y') if funcionario.data_admissao else '',
         'data_nascimento': funcionario.data_nascimento.strftime('%d/%m/%Y') if funcionario.data_nascimento else '',
         'rg': funcionario.rg if funcionario.rg else '',
@@ -2162,7 +2068,7 @@ def nr01_para_impressao(funcionario_id):
     dados_funcionario = {
         'nome': funcionario.nome,
         'cpf': funcionario.cpf_formatado,
-        'cargo': funcionario.funcao if funcionario.funcao else 'AJUDANTE DE INSTALADOR DE TELAS',
+        'cargo': funcionario.funcao if funcionario.funcao else 'AJUDANTE DE INSTALAADOR DE TELAS',
         'data_admissao': funcionario.data_admissao.strftime('%d/%m/%Y') if funcionario.data_admissao else '',
         'data_nascimento': funcionario.data_nascimento.strftime('%d/%m/%Y') if funcionario.data_nascimento else '',
         'rg': funcionario.rg if funcionario.rg else '',
@@ -2177,15 +2083,38 @@ def nr01_para_impressao(funcionario_id):
 
 
 if __name__ == '__main__':
+    # Criar banco de dados e usuário admin padrão
     with app.app_context():
         db.create_all()
 
-        # Inicializar módulo EPI
-        try:
-            from integracao_epi import init_epi_module
-            init_epi_module(app)
-        except Exception as e:
-            print(f"⚠️ Aviso: Erro ao carregar módulo EPI: {str(e)}")
+        # Verificar se já existe um usuário admin
+        admin_existente = Funcionario.query.filter_by(
+            cpf='00000000000').first()
+        if not admin_existente:
+            # Criar usuário administrador padrão
+            admin = Funcionario(
+                nome='Administrador do Sistema',
+                cpf='00000000000',
+                rg='0000000',
+                funcao='Administrador',
+                data_admissao=datetime.now().date(),
+                data_nascimento=datetime(1990, 1, 1).date(),
+                telefone='(00) 00000-0000',
+                email='admin@sistema.com',
+                ativo=True,
+                admin=True,
+                primeiro_login=False
+            )
+            admin.set_password('admin123')  # Senha padrão
+
+            db.session.add(admin)
+            db.session.commit()
+
+            print("👤 Usuário administrador criado:")
+            print("   📧 CPF: 00000000000")
+            print("   🔑 Senha: admin123")
+            print("   ⚠️  Lembre-se de alterar a senha após o primeiro login!")
+            print("=" * 60)
 
     # Configuração para acesso em rede
     import socket
@@ -2204,4 +2133,4 @@ if __name__ == '__main__':
     print("   - Certifique-se que o firewall permite conexões na porta 5000")
     print("   - Todos os dispositivos devem estar na mesma rede")
     print("=" * 60)
-    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
+    app.run(host='127.0.0.1', port=5000, debug=True, threaded=True)

@@ -148,15 +148,17 @@
         <div class="card h-100 shadow-sm border-warning">
             <div class="card-body text-center">
                 <div class="mb-3">
-                    <i class="fas fa-hard-hat text-warning" style="font-size: 3rem;"></i>
+                    <i class="fas fa-shield-alt text-warning" style="font-size: 3rem;"></i>
                 </div>
-                <h5 class="card-title">Gestão de EPIs</h5>
-                <p class="card-text">Controle de equipamentos de proteção</p>
+                <h5 class="card-title">Sistema de Gestão de EPIs</h5>
+                <p class="card-text">Controle completo de Equipamentos de Proteção Individual</p>
                 <div class="d-grid gap-2">
-                    <a href="{{ url_for('epi.index') }}" class="btn btn-outline-warning">Acessar EPIs</a>
-                    {% if current_user.is_authenticated and current_user.admin %}
-                    <a href="{{ url_for('epi.cadastro_epi') }}" class="btn btn-warning">Cadastrar EPI</a>
-                    {% endif %}
+                    <a href="/epi" class="btn btn-warning">
+                        <i class="fas fa-external-link-alt me-2"></i>Acessar Sistema
+                    </a>
+                    <small class="text-muted">
+                        <i class="fas fa-check-circle me-1"></i>Inventário, Entregas, Relatórios
+                    </small>
                 </div>
             </div>
         </div>

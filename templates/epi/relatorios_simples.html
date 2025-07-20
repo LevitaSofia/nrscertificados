@@ -1,0 +1,735 @@
+{% extends "base.html" %}
+
+{% block title %}Relatórios EPI - Sistema de Gestão de EPIs{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>
+                    <i class="fas fa-chart-bar text-primary"></i>
+                    Relatórios de EPI
+                </h2>
+                <p class="text-muted">Análises e relatórios detalhados do sistema de gestão</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cards de Estatísticas Gerais -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Total EPIs</h5>
+                        <h2 id="totalEpis">-</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-shield-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Entregas Mês</h5>
+                        <h2 id="entregasMes">-</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-hand-holding fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Estoque Baixo</h5>
+                        <h2 id="estoqueBaixo">-</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">CAs Vencendo</h5>
+                        <h2 id="casVencendo">-</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-calendar-times fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros para Relatórios -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-filter"></i>
+                    Filtros para Relatórios
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="filtrosRelatorio" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="periodo_inicio" class="form-label">Data Início:</label>
+                        <input type="date" class="form-control" id="periodo_inicio">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="periodo_fim" class="form-label">Data Fim:</label>
+                        <input type="date" class="form-control" id="periodo_fim">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filtro_tipo_protecao" class="form-label">Tipo de Proteção:</label>
+                        <select class="form-select" id="filtro_tipo_protecao">
+                            <option value="">Todos os tipos</option>
+                            <option value="Visual">Visual</option>
+                            <option value="Auditiva">Auditiva</option>
+                            <option value="Respiratória">Respiratória</option>
+                            <option value="Cabeça">Cabeça</option>
+                            <option value="Mãos">Mãos</option>
+                            <option value="Pés">Pés</option>
+                            <option value="Corporal">Corporal</option>
+                            <option value="Contra Quedas">Contra Quedas</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filtro_funcionario_rel" class="form-label">Funcionário:</label>
+                        <select class="form-select" id="filtro_funcionario_rel">
+                            <option value="">Todos os funcionários</option>
+                            <!-- Carregado via AJAX -->
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="button" class="btn btn-primary" onclick="atualizarRelatorios()">
+                            <i class="fas fa-sync"></i>
+                            Atualizar Relatórios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Abas de Relatórios -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="relatorioTabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="estoque-tab" data-bs-toggle="tab" href="#estoque">
+                            <i class="fas fa-boxes"></i>
+                            Estoque
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="entregas-tab" data-bs-toggle="tab" href="#entregas">
+                            <i class="fas fa-hand-holding"></i>
+                            Entregas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="vencimentos-tab" data-bs-toggle="tab" href="#vencimentos">
+                            <i class="fas fa-calendar-times"></i>
+                            Vencimentos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="funcionarios-tab" data-bs-toggle="tab" href="#funcionarios">
+                            <i class="fas fa-users"></i>
+                            Por Funcionário
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="relatorioTabContent">
+
+                    <!-- Aba Estoque -->
+                    <div class="tab-pane fade show active" id="estoque">
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <h5>
+                                    <i class="fas fa-chart-pie text-primary"></i>
+                                    Distribuição por Tipo de Proteção
+                                </h5>
+                                <canvas id="graficoTiposProtecao" height="100"></canvas>
+                            </div>
+                            <div class="col-lg-4">
+                                <h5>
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                    Alertas de Estoque
+                                </h5>
+                                <div id="alertasEstoque">
+                                    <!-- Carregado via AJAX -->
+                                </div>
+                                <div class="text-center mt-3">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="exportarRelatorioEstoque()">
+                                        <i class="fas fa-download"></i>
+                                        Exportar PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aba Entregas -->
+                    <div class="tab-pane fade" id="entregas">
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <h5>
+                                    <i class="fas fa-chart-line text-success"></i>
+                                    Entregas por Período
+                                </h5>
+                                <canvas id="graficoEntregasPeriodo" height="100"></canvas>
+                            </div>
+                            <div class="col-lg-4">
+                                <h5>
+                                    <i class="fas fa-trophy text-warning"></i>
+                                    EPIs Mais Entregues
+                                </h5>
+                                <div id="rankingEpis">
+                                    <!-- Carregado via AJAX -->
+                                </div>
+                                <div class="text-center mt-3">
+                                    <button class="btn btn-outline-success btn-sm"
+                                        onclick="exportarRelatorioEntregas()">
+                                        <i class="fas fa-download"></i>
+                                        Exportar PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aba Vencimentos -->
+                    <div class="tab-pane fade" id="vencimentos">
+                        <div class="row">
+                            <div class="col-12">
+                                <h5>
+                                    <i class="fas fa-calendar-alt text-danger"></i>
+                                    CAs com Vencimento Próximo
+                                </h5>
+                                <div class="table-responsive">
+                                    <table class="table table-striped" id="tabelaVencimentos">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>EPI</th>
+                                                <th>CA</th>
+                                                <th>Validade</th>
+                                                <th>Dias Restantes</th>
+                                                <th>Estoque</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="corpoTabelaVencimentos">
+                                            <!-- Carregado via AJAX -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="text-center mt-3">
+                                    <button class="btn btn-outline-danger btn-sm"
+                                        onclick="exportarRelatorioVencimentos()">
+                                        <i class="fas fa-download"></i>
+                                        Exportar PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aba Por Funcionário -->
+                    <div class="tab-pane fade" id="funcionarios">
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <h5>
+                                    <i class="fas fa-chart-bar text-info"></i>
+                                    Entregas por Funcionário
+                                </h5>
+                                <canvas id="graficoFuncionarios" height="100"></canvas>
+                            </div>
+                            <div class="col-lg-4">
+                                <h5>
+                                    <i class="fas fa-clipboard-list text-primary"></i>
+                                    Resumo Individual
+                                </h5>
+                                <div id="resumoFuncionario">
+                                    <p class="text-muted">Selecione um funcionário nos filtros para ver o resumo
+                                        detalhado.</p>
+                                </div>
+                                <div class="text-center mt-3">
+                                    <button class="btn btn-outline-info btn-sm"
+                                        onclick="exportarRelatorioFuncionarios()">
+                                        <i class="fas fa-download"></i>
+                                        Exportar PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ações Rápidas -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt"></i>
+                    Ações Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-primary w-100" onclick="gerarRelatorioCompleto()">
+                            <i class="fas fa-file-alt fa-2x d-block mb-2"></i>
+                            Relatório Completo
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-success w-100" onclick="exportarInventario()">
+                            <i class="fas fa-warehouse fa-2x d-block mb-2"></i>
+                            Inventário Atual
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-warning w-100" onclick="alertasVencimento()">
+                            <i class="fas fa-bell fa-2x d-block mb-2"></i>
+                            Alertas Vencimento
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-info w-100" onclick="estatisticasDetalhadas()">
+                            <i class="fas fa-chart-pie fa-2x d-block mb-2"></i>
+                            Estatísticas Detalhadas
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let graficoTipos, graficoEntregas, graficoFuncionarios;
+
+    $(document).ready(function () {
+        // Definir período padrão (último mês)
+        const hoje = new Date();
+        const mesPassado = new Date(hoje.getFullYear(), hoje.getMonth() - 1, hoje.getDate());
+
+        document.getElementById('periodo_inicio').value = mesPassado.toISOString().split('T')[0];
+        document.getElementById('periodo_fim').value = hoje.toISOString().split('T')[0];
+
+        // Carregar dados iniciais
+        carregarEstatisticasGerais();
+        carregarFuncionariosRelatorio();
+        atualizarRelatorios();
+    });
+
+    function carregarEstatisticasGerais() {
+        fetch('/epi/api/estatisticas-gerais')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('totalEpis').textContent = data.total_epis;
+                    document.getElementById('entregasMes').textContent = data.entregas_mes;
+                    document.getElementById('estoqueBaixo').textContent = data.estoque_baixo;
+                    document.getElementById('casVencendo').textContent = data.cas_vencendo;
+                }
+            })
+            .catch(error => console.error('Erro ao carregar estatísticas:', error));
+    }
+
+    function carregarFuncionariosRelatorio() {
+        fetch('/epi/api/funcionarios')
+            .then(response => response.json())
+            .then(data => {
+                const select = document.getElementById('filtro_funcionario_rel');
+                let html = '<option value="">Todos os funcionários</option>';
+
+                data.funcionarios.forEach(func => {
+                    html += `<option value="${func.id}">${func.nome}</option>`;
+                });
+
+                select.innerHTML = html;
+            });
+    }
+
+    function atualizarRelatorios() {
+        const filtros = {
+            data_inicio: document.getElementById('periodo_inicio').value,
+            data_fim: document.getElementById('periodo_fim').value,
+            tipo_protecao: document.getElementById('filtro_tipo_protecao').value,
+            funcionario_id: document.getElementById('filtro_funcionario_rel').value
+        };
+
+        carregarRelatorioEstoque(filtros);
+        carregarRelatorioEntregas(filtros);
+        carregarRelatorioVencimentos(filtros);
+        carregarRelatorioFuncionarios(filtros);
+    }
+
+    function carregarRelatorioEstoque(filtros) {
+        const params = new URLSearchParams(filtros);
+
+        fetch(`/epi/api/relatorio-estoque?${params}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Atualizar gráfico de tipos de proteção
+                    atualizarGraficoTipos(data.tipos_protecao);
+
+                    // Atualizar alertas de estoque
+                    exibirAlertasEstoque(data.alertas_estoque);
+                }
+            })
+            .catch(error => console.error('Erro ao carregar relatório de estoque:', error));
+    }
+
+    function carregarRelatorioEntregas(filtros) {
+        const params = new URLSearchParams(filtros);
+
+        fetch(`/epi/api/relatorio-entregas?${params}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Atualizar gráfico de entregas por período
+                    atualizarGraficoEntregas(data.entregas_periodo);
+
+                    // Atualizar ranking de EPIs
+                    exibirRankingEpis(data.ranking_epis);
+                }
+            })
+            .catch(error => console.error('Erro ao carregar relatório de entregas:', error));
+    }
+
+    function carregarRelatorioVencimentos(filtros) {
+        const params = new URLSearchParams(filtros);
+
+        fetch(`/epi/api/relatorio-vencimentos?${params}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    exibirTabelaVencimentos(data.vencimentos);
+                }
+            })
+            .catch(error => console.error('Erro ao carregar relatório de vencimentos:', error));
+    }
+
+    function carregarRelatorioFuncionarios(filtros) {
+        const params = new URLSearchParams(filtros);
+
+        fetch(`/epi/api/relatorio-funcionarios?${params}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Atualizar gráfico de funcionários
+                    atualizarGraficoFuncionarios(data.entregas_funcionarios);
+
+                    // Atualizar resumo do funcionário selecionado
+                    if (filtros.funcionario_id) {
+                        exibirResumoFuncionario(data.resumo_funcionario);
+                    }
+                }
+            })
+            .catch(error => console.error('Erro ao carregar relatório de funcionários:', error));
+    }
+
+    function atualizarGraficoTipos(dados) {
+        const ctx = document.getElementById('graficoTiposProtecao').getContext('2d');
+
+        if (graficoTipos) {
+            graficoTipos.destroy();
+        }
+
+        graficoTipos = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: dados.map(item => item.tipo),
+                datasets: [{
+                    data: dados.map(item => item.quantidade),
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                        '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    function atualizarGraficoEntregas(dados) {
+        const ctx = document.getElementById('graficoEntregasPeriodo').getContext('2d');
+
+        if (graficoEntregas) {
+            graficoEntregas.destroy();
+        }
+
+        graficoEntregas = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dados.map(item => item.periodo),
+                datasets: [{
+                    label: 'Entregas',
+                    data: dados.map(item => item.quantidade),
+                    borderColor: '#36A2EB',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    function atualizarGraficoFuncionarios(dados) {
+        const ctx = document.getElementById('graficoFuncionarios').getContext('2d');
+
+        if (graficoFuncionarios) {
+            graficoFuncionarios.destroy();
+        }
+
+        graficoFuncionarios = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: dados.map(item => item.funcionario.split(' ')[0]), // Apenas primeiro nome
+                datasets: [{
+                    label: 'Entregas',
+                    data: dados.map(item => item.quantidade),
+                    backgroundColor: '#4BC0C0'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    function exibirAlertasEstoque(alertas) {
+        const container = document.getElementById('alertasEstoque');
+        let html = '';
+
+        if (alertas.length === 0) {
+            html = '<div class="alert alert-success"><i class="fas fa-check"></i> Todos os estoques estão adequados!</div>';
+        } else {
+            alertas.forEach(alerta => {
+                html += `
+                <div class="alert alert-warning alert-sm">
+                    <strong>${alerta.nome}</strong><br>
+                    <small>Estoque: ${alerta.estoque_atual} | Mínimo: ${alerta.estoque_minimo}</small>
+                </div>
+            `;
+            });
+        }
+
+        container.innerHTML = html;
+    }
+
+    function exibirRankingEpis(ranking) {
+        const container = document.getElementById('rankingEpis');
+        let html = '';
+
+        ranking.forEach((item, index) => {
+            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}º`;
+            html += `
+            <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                <div>
+                    <span class="fw-bold">${medal}</span>
+                    <span class="ms-2">${item.epi}</span>
+                </div>
+                <span class="badge bg-primary">${item.quantidade}</span>
+            </div>
+        `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function exibirTabelaVencimentos(vencimentos) {
+        const tbody = document.getElementById('corpoTabelaVencimentos');
+        let html = '';
+
+        vencimentos.forEach(item => {
+            const diasRestantes = item.dias_restantes;
+            let statusClass = '';
+            let statusText = '';
+
+            if (diasRestantes < 0) {
+                statusClass = 'danger';
+                statusText = 'Vencido';
+            } else if (diasRestantes <= 30) {
+                statusClass = 'warning';
+                statusText = 'Crítico';
+            } else if (diasRestantes <= 90) {
+                statusClass = 'info';
+                statusText = 'Atenção';
+            } else {
+                statusClass = 'success';
+                statusText = 'OK';
+            }
+
+            html += `
+            <tr>
+                <td>${item.nome}</td>
+                <td>${item.ca}</td>
+                <td>${formatarData(item.validade_ca)}</td>
+                <td>
+                    <span class="badge bg-${statusClass}">${Math.abs(diasRestantes)} dias</span>
+                </td>
+                <td>${item.estoque_atual}</td>
+                <td>
+                    <span class="badge bg-${statusClass}">${statusText}</span>
+                </td>
+            </tr>
+        `;
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    function exibirResumoFuncionario(resumo) {
+        const container = document.getElementById('resumoFuncionario');
+
+        if (!resumo) {
+            container.innerHTML = '<p class="text-muted">Dados não disponíveis.</p>';
+            return;
+        }
+
+        const html = `
+        <div class="card border-info">
+            <div class="card-body">
+                <h6 class="card-title">${resumo.nome}</h6>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-hand-holding text-success"></i> Entregas: ${resumo.total_entregas}</li>
+                    <li><i class="fas fa-undo text-primary"></i> Devoluções: ${resumo.total_devolucoes}</li>
+                    <li><i class="fas fa-shield-alt text-info"></i> EPIs em uso: ${resumo.epis_em_uso}</li>
+                    <li><i class="fas fa-calendar text-warning"></i> Última entrega: ${resumo.ultima_entrega ? formatarData(resumo.ultima_entrega) : 'N/A'}</li>
+                </ul>
+            </div>
+        </div>
+    `;
+
+        container.innerHTML = html;
+    }
+
+    // Funções de exportação
+    function exportarRelatorioEstoque() {
+        const filtros = coletarFiltros();
+        const params = new URLSearchParams(filtros);
+        window.open(`/epi/api/exportar-relatorio-estoque?${params}`, '_blank');
+    }
+
+    function exportarRelatorioEntregas() {
+        const filtros = coletarFiltros();
+        const params = new URLSearchParams(filtros);
+        window.open(`/epi/api/exportar-relatorio-entregas?${params}`, '_blank');
+    }
+
+    function exportarRelatorioVencimentos() {
+        const filtros = coletarFiltros();
+        const params = new URLSearchParams(filtros);
+        window.open(`/epi/api/exportar-relatorio-vencimentos?${params}`, '_blank');
+    }
+
+    function exportarRelatorioFuncionarios() {
+        const filtros = coletarFiltros();
+        const params = new URLSearchParams(filtros);
+        window.open(`/epi/api/exportar-relatorio-funcionarios?${params}`, '_blank');
+    }
+
+    function gerarRelatorioCompleto() {
+        const filtros = coletarFiltros();
+        const params = new URLSearchParams(filtros);
+        window.open(`/epi/api/relatorio-completo?${params}`, '_blank');
+    }
+
+    function exportarInventario() {
+        window.open('/epi/api/exportar-inventario', '_blank');
+    }
+
+    function alertasVencimento() {
+        window.open('/epi/api/alertas-vencimento', '_blank');
+    }
+
+    function estatisticasDetalhadas() {
+        const filtros = coletarFiltros();
+        const params = new URLSearchParams(filtros);
+        window.open(`/epi/api/estatisticas-detalhadas?${params}`, '_blank');
+    }
+
+    function coletarFiltros() {
+        return {
+            data_inicio: document.getElementById('periodo_inicio').value,
+            data_fim: document.getElementById('periodo_fim').value,
+            tipo_protecao: document.getElementById('filtro_tipo_protecao').value,
+            funcionario_id: document.getElementById('filtro_funcionario_rel').value
+        };
+    }
+
+    function formatarData(data) {
+        return new Date(data).toLocaleDateString('pt-BR');
+    }
+
+    // Event listener para atualizar resumo do funcionário quando selecionado
+    document.getElementById('filtro_funcionario_rel').addEventListener('change', function () {
+        if (this.value) {
+            atualizarRelatorios();
+        } else {
+            document.getElementById('resumoFuncionario').innerHTML = '<p class="text-muted">Selecione um funcionário nos filtros para ver o resumo detalhado.</p>';
+        }
+    });
+</script>
+{% endblock %}

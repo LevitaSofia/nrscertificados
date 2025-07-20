@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Cadastrar' if modo == 'novo' else 'Editar' }} EPI - Sistema de Gestão de EPIs{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>
+                    <i class="fas fa-{{ 'plus' if modo == 'novo' else 'edit' }} text-primary"></i>
+                    {{ 'Cadastrar Novo' if modo == 'novo' else 'Editar' }} EPI
+                </h2>
+                <p class="text-muted">Preencha os dados do Equipamento de Proteção Individual</p>
+            </div>
+            <div>
+                <a href="{{ url_for('epi.inventario') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Voltar ao Inventário
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-shield-alt"></i>
+                    Dados do EPI
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('epi.salvar_epi') }}" id="formEPI">
+                    {% if epi %}
+                    <input type="hidden" name="epi_id" value="{{ epi.id }}">
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <!-- Nome do EPI -->
+                        <div class="col-md-8">
+                            <label for="nome" class="form-label">
+                                <i class="fas fa-tag text-primary"></i>
+                                Nome do EPI <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="nome" name="nome"
+                                value="{{ epi.nome if epi else '' }}" placeholder="Ex: Óculos de Segurança Incolor"
+                                required>
+                            <div class="form-text">Nome completo e descritivo do EPI</div>
+                        </div>
+
+                        <!-- CA -->
+                        <div class="col-md-4">
+                            <label for="ca" class="form-label">
+                                <i class="fas fa-certificate text-warning"></i>
+                                CA (Certificado de Aprovação) <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="ca" name="ca"
+                                    value="{{ epi.ca if epi else '' }}" placeholder="12345" required>
+                                <button type="button" class="btn btn-outline-info" onclick="verificarCA()"
+                                    title="Verificar CA online">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">Número do CA do MTE</div>
+                        </div>
+
+                        <!-- Validade do CA -->
+                        <div class="col-md-6">
+                            <label for="validade_ca" class="form-label">
+                                <i class="fas fa-calendar text-danger"></i>
+                                Validade do CA <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" class="form-control" id="validade_ca" name="validade_ca"
+                                value="{{ epi.validade_ca.strftime('%Y-%m-%d') if epi and epi.validade_ca else '' }}"
+                                required>
+                            <div class="form-text">Data de vencimento do Certificado de Aprovação</div>
+                        </div>
+
+                        <!-- Fabricante -->
+                        <div class="col-md-6">
+                            <label for="fabricante" class="form-label">
+                                <i class="fas fa-industry text-info"></i>
+                                Fabricante
+                            </label>
+                            <input type="text" class="form-control" id="fabricante" name="fabricante"
+                                value="{{ epi.fabricante if epi else '' }}" placeholder="Ex: 3M, VONDER, MSA">
+                            <div class="form-text">Nome do fabricante do EPI</div>
+                        </div>
+
+                        <!-- Tipo de Proteção -->
+                        <div class="col-md-6">
+                            <label for="tipo_protecao" class="form-label">
+                                <i class="fas fa-shield-alt text-success"></i>
+                                Tipo de Proteção
+                            </label>
+                            <select class="form-select" id="tipo_protecao" name="tipo_protecao">
+                                <option value="">Selecione o tipo...</option>
+                                <option value="Visual" {{ 'selected' if epi and epi.tipo_protecao=='Visual' else '' }}>
+                                    Visual</option>
+                                <option value="Auditiva" {{ 'selected' if epi and epi.tipo_protecao=='Auditiva' else ''
+                                    }}>Auditiva</option>
+                                <option value="Respiratória" {{ 'selected' if epi and epi.tipo_protecao=='Respiratória'
+                                    else '' }}>Respiratória</option>
+                                <option value="Cabeça" {{ 'selected' if epi and epi.tipo_protecao=='Cabeça' else '' }}>
+                                    Cabeça</option>
+                                <option value="Mãos" {{ 'selected' if epi and epi.tipo_protecao=='Mãos' else '' }}>Mãos
+                                </option>
+                                <option value="Pés" {{ 'selected' if epi and epi.tipo_protecao=='Pés' else '' }}>Pés
+                                </option>
+                                <option value="Corporal" {{ 'selected' if epi and epi.tipo_protecao=='Corporal' else ''
+                                    }}>Corporal</option>
+                                <option value="Contra Quedas" {{ 'selected' if epi and
+                                    epi.tipo_protecao=='Contra Quedas' else '' }}>Contra Quedas</option>
+                            </select>
+                            <div class="form-text">Categoria de proteção do EPI</div>
+                        </div>
+
+                        <!-- Estoque Atual -->
+                        <div class="col-md-3">
+                            <label for="estoque_atual" class="form-label">
+                                <i class="fas fa-boxes text-primary"></i>
+                                Estoque Atual
+                            </label>
+                            <input type="number" class="form-control" id="estoque_atual" name="estoque_atual"
+                                value="{{ epi.estoque_atual if epi else '0' }}" min="0" step="1">
+                            <div class="form-text">Quantidade em estoque</div>
+                        </div>
+
+                        <!-- Estoque Mínimo -->
+                        <div class="col-md-3">
+                            <label for="estoque_minimo" class="form-label">
+                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                                Estoque Mínimo
+                            </label>
+                            <input type="number" class="form-control" id="estoque_minimo_alerta"
+                                name="estoque_minimo_alerta" value="{{ epi.estoque_minimo_alerta if epi else '5' }}"
+                                min="1" step="1">
+                            <div class="form-text">Limite para alerta</div>
+                        </div>
+
+                        <!-- Descrição -->
+                        <div class="col-12">
+                            <label for="descricao" class="form-label">
+                                <i class="fas fa-align-left text-secondary"></i>
+                                Descrição Detalhada
+                            </label>
+                            <textarea class="form-control" id="descricao" name="descricao" rows="3"
+                                placeholder="Informações adicionais sobre o EPI (modelo, características especiais, etc.)">{{ epi.descricao if epi else '' }}</textarea>
+                            <div class="form-text">Descrição completa e características do EPI</div>
+                        </div>
+                    </div>
+
+                    <!-- Resultado da Verificação de CA -->
+                    <div id="resultadoVerificacaoCA" class="mt-3"></div>
+
+                    <!-- Botões -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <a href="{{ url_for('epi.inventario') }}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i>
+                                    Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    {{ 'Cadastrar EPI' if modo == 'novo' else 'Salvar Alterações' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dicas e Informações -->
+<div class="row mt-4 justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    Dicas para Cadastro de EPIs
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-certificate text-warning"></i> Sobre o CA:</h6>
+                        <ul class="small">
+                            <li>O CA é obrigatório para todos os EPIs</li>
+                            <li>Verifique sempre a validade antes do cadastro</li>
+                            <li>Use a função "Verificar CA" para validar online</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-boxes text-primary"></i> Sobre o Estoque:</h6>
+                        <ul class="small">
+                            <li>Defina um estoque mínimo adequado</li>
+                            <li>O sistema alertará quando atingir o mínimo</li>
+                            <li>Mantenha sempre atualizado</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function verificarCA() {
+        const ca = document.getElementById('ca').value.trim();
+
+        if (!ca) {
+            alert('Digite o número do CA primeiro!');
+            return;
+        }
+
+        // Mostrar loading
+        const resultadoDiv = document.getElementById('resultadoVerificacaoCA');
+        resultadoDiv.innerHTML = `
+        <div class="alert alert-info">
+            <i class="fas fa-spinner fa-spin"></i>
+            Verificando CA ${ca}...
+        </div>
+    `;
+
+        // Fazer requisição
+        fetch(`/epi/api/verificar-ca/${ca}`)
+            .then(response => response.json())
+            .then(data => {
+                let html = '';
+
+                if (data.success) {
+                    if (data.situacao === 'Ativo') {
+                        html = `
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-check-circle"></i> CA Válido e Ativo!</h6>
+                            <p class="mb-2"><strong>Validade:</strong> ${data.validade_ca}</p>
+                            ${data.fabricante ? `<p class="mb-0"><strong>Fabricante:</strong> ${data.fabricante}</p>` : ''}
+                        </div>
+                    `;
+
+                        // Preencher automaticamente a validade
+                        if (data.validade_ca) {
+                            document.getElementById('validade_ca').value = data.validade_ca;
+                        }
+
+                        // Preencher fabricante se disponível
+                        if (data.fabricante) {
+                            document.getElementById('fabricante').value = data.fabricante;
+                        }
+
+                    } else if (data.situacao === 'Vencido') {
+                        html = `
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-exclamation-triangle"></i> CA Vencido!</h6>
+                            <p class="mb-0">Este CA está vencido desde ${data.validade_ca}. Não é recomendado cadastrar EPIs com CA vencido.</p>
+                        </div>
+                    `;
+                    }
+                } else {
+                    html = `
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-question-circle"></i> CA Não Encontrado</h6>
+                        <p class="mb-0">Este CA não foi encontrado na base de dados. Verifique se o número está correto.</p>
+                    </div>
+                `;
+                }
+
+                resultadoDiv.innerHTML = html;
+            })
+            .catch(error => {
+                resultadoDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-times-circle"></i> Erro na Verificação</h6>
+                    <p class="mb-0">Não foi possível verificar o CA. Tente novamente mais tarde.</p>
+                </div>
+            `;
+            });
+    }
+
+    $(document).ready(function () {
+        // Validação do formulário
+        $('#formEPI').on('submit', function (e) {
+            let valido = true;
+
+            // Verificar campos obrigatórios
+            if (!$('#nome').val().trim()) {
+                alert('Nome do EPI é obrigatório!');
+                $('#nome').focus();
+                valido = false;
+            } else if (!$('#ca').val().trim()) {
+                alert('CA é obrigatório!');
+                $('#ca').focus();
+                valido = false;
+            } else if (!$('#validade_ca').val()) {
+                alert('Validade do CA é obrigatória!');
+                $('#validade_ca').focus();
+                valido = false;
+            }
+
+            // Verificar se a validade não está no passado
+            if ($('#validade_ca').val()) {
+                const hoje = new Date();
+                const validade = new Date($('#validade_ca').val());
+
+                if (validade < hoje) {
+                    if (!confirm('A validade do CA está no passado. Deseja continuar mesmo assim?')) {
+                        valido = false;
+                    }
+                }
+            }
+
+            if (!valido) {
+                e.preventDefault();
+            }
+        });
+
+        // Máscara para CA (apenas números)
+        $('#ca').on('input', function () {
+            this.value = this.value.replace(/\D/g, '');
+        });
+
+        // Auto-verificação de CA quando sair do campo
+        $('#ca').on('blur', function () {
+            if (this.value.trim() && this.value.length >= 4) {
+                setTimeout(verificarCA, 500);
+            }
+        });
+    });
+</script>
+{% endblock %}
